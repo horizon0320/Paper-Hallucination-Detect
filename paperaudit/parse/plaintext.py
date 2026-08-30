@@ -174,10 +174,10 @@ def _split_embedded_organization_refs(chunks: list[str]) -> list[str]:
             # middle of a web citation.  Embedded organization labels in the
             # affected layouts use the explicit ``The <Organization>.`` form;
             # retain compact non-``The`` labels through ``compact_org_year``.
-            organization_start = bool(
-                re.match(r"^The\s+", first_sentence, re.IGNORECASE)
-                and _looks_like_organization_line(first_sentence + ".")
-            )
+            # A PDF may flatten two adjacent web/data-set records. The
+            # carrier can be an explicit ``The ...`` label or a compact
+            # project organization such as ``ModelScope Community``.
+            organization_start = _looks_like_organization_line(first_sentence + ".")
             # Multi-author prefix followed by a title.  Require at least one
             # comma/``and`` separator and a sentence boundary so prose is not
             # mistaken for a new record.
@@ -193,7 +193,14 @@ def _split_embedded_organization_refs(chunks: list[str]) -> list[str]:
             # span), except for compact author-year citations that may be
             # completed by a URL after the year.
             has_url = bool(re.search(r"https?\s*:\s*//", right[:360], re.IGNORECASE))
-            if (organization_start or author_start or compact_org_year) and (has_url or compact_org_year):
+            has_bibliography_signal = bool(
+                re.search(
+                    r"https?\s*:\s*//|arXiv\s+preprint|\b(?:19|20)\d{2}[a-z]?\b|\bIn\s+",
+                    right[:420],
+                    re.IGNORECASE,
+                )
+            )
+            if (organization_start and has_url) or (author_start and has_bibliography_signal) or compact_org_year:
                 boundaries.append(match.start())
 
         if not boundaries:
@@ -511,9 +518,23 @@ def _looks_like_organization_line(value: str) -> bool:
     # citation branch swallow the actual title in that common format.
     if len(words) == 2 and all(re.match(r"^[A-Z][a-zÀ-ÿ'’\-]+$", word) for word in words):
         return False
+    # Do not mistake a title-cased article title (``America's AI Action
+    # Plan``) for an organization. Beyond explicit ``The ...`` labels, use
+    # organizational suffixes/markers that occur in group-authored records.
+    has_org_marker = bool(
+        re.match(r"^The\s+", value[:-1], re.IGNORECASE)
+        or re.search(
+            r"\b(?:Community|Team|Association|Institute|Organization|Laboratory|Lab|"
+            r"Foundation|Committee|Corporation|Company|Press|Society|Group)\b$",
+            value[:-1],
+            re.IGNORECASE,
+        )
+    )
+    if not has_org_marker:
+        return False
     # A standalone label is title-cased or all-caps; sentence prose and
     # ordinary wrapped paper titles generally contain lowercase starters.
-    return all(re.match(r"^[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’&\-]*$", word) for word in words)
+    return all(re.match(r"^[A-ZÀ-ÿ][A-Za-zÀ-ÿ0-9'’&\-/]*$", word) for word in words)
 
 
 def _looks_like_author_start(value: str) -> bool:
@@ -532,7 +553,14 @@ def _looks_like_author_start(value: str) -> bool:
         # ``OpenAI.`` while rejecting one-word venue continuations.
         return bool(re.match(r"^(?:OpenAI|Gemma)(?:\s+Team)?[,.]\s+", value))
     first, second = tokens[0], tokens[1]
-    if len(first.rstrip(".")) > 1 and first.casefold().rstrip(".") in _AUTHOR_START_STOPWORDS:
+    if (
+        len(first.rstrip(".")) > 1
+        and first.casefold().rstrip(".") in _AUTHOR_START_STOPWORDS
+        and not (
+            first.casefold().rstrip(".") == "an"
+            and re.match(r"^An\s+[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ'’\-]+,", value)
+        )
+    ):
         return False
     if len(second.rstrip(".")) > 1 and second.casefold().rstrip(".") in _AUTHOR_START_STOPWORDS:
         return False
@@ -762,7 +790,16 @@ def _normalize_compact_title(value: str | None) -> str | None:
     value = unicodedata.normalize("NFKC", value)
     # Restore spaces removed after punctuation and between camel-case words.
     value = re.sub(r"(?<=[,:;])(?=[A-Za-z])", " ", value)
-    value = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", value)
+    # Split camel-case words in prose (``NuminaMath``), but preserve
+    # repository/data-set identifiers containing a slash, hyphen, or digit
+    # (``AI-ModelScope/CodeAlpaca-20k``).
+    def split_camel_token(match: re.Match[str]) -> str:
+        token = match.group(0)
+        if any(ch in token for ch in "/-0123456789"):
+            return token
+        return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", token)
+
+    value = re.sub(r"\S+", split_camel_token, value)
     # A few PDF encoders remove spaces even when both neighboring words are
     # lowercase (``Spatialgroup-wiseenhance``). Split only well-known
     # technical title morphemes to avoid changing legitimate identifiers.
@@ -958,7 +995,8 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
     # sentence boundary. This keeps search queries focused on the work title.
     venue_markers = re.search(
         r"\s+(?=(?:arXiv\s+preprint|Preprint\s+at|In\s+Proceedings|In\s+Advances\s+in|"
-            r"In\s+International|In\s+\d+(?:st|nd|rd|th)\b|"
+            r"In\s+(?:The\s+)?(?:[A-Z][A-Za-z-]*\s+){0,4}International\b|"
+            r"In\s+\d+(?:st|nd|rd|th)\b|"
             r"(?:19|20)\d{2}\s+\d+(?:st|nd|rd|th)\s+International\b|"
             r"Advances\s+in|Under\s+review|Transactions\s+of|ACM\s+Computing|"
             r"Journal\s+of\b|Foundations\s+and\s+Trends\b|Center\s+for\b|"
@@ -1056,6 +1094,10 @@ def _looks_like_author_continuation(value: str) -> bool:
         or re.match(r"^[A-ZÀ-ÿ][a-zà-ÿ'’´¨`\-]{2,}\.\s+[A-ZÀ-ÿ]", value)
         or re.match(r"^[A-Z]\.,\s*[A-ZÀ-ÿ][a-zà-ÿ'’\-]+", value)
         or re.match(r"^[A-Z]\.[, ]+\s*[A-ZÀ-ÿ][a-zà-ÿ'’\-]+,", value)
+        # OCR/PDF text layers can glue an initial block to a lower-case
+        # surname (``C. J. H. un``). It is still an author continuation,
+        # not the start of a title.
+        or re.match(r"^(?:[A-Z]\.\s*){1,3}[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]{1,},", value)
         or re.match(r"^[A-ZÀ-ÿ][a-zà-ÿ'’\-]+,\s+(?:[A-Z]\.?\s*)+", value)
     )
 
@@ -1064,6 +1106,10 @@ def _parse_author_list(text: str) -> list[str]:
     text = text.strip().rstrip(".,")
     if not text:
         return []
+    # ``et al.`` is a truncation marker, not an author. Removing it before
+    # splitting makes the cited names a true prefix of the complete index
+    # record, so normal abbreviated citations do not trigger author conflicts.
+    text = re.sub(r"\s*,?\s+et\s+al\.?\s*$", "", text, flags=re.IGNORECASE).strip(" .,;")
     # PDF text extraction may remove spaces after commas, around ``and``, or
     # inside initial blocks (``Y.Li,X.Li,andJ.Yang``). Restore these separators
     # before applying the author split rules below.
@@ -1117,6 +1163,9 @@ def _parse_author_list(text: str) -> list[str]:
         # is followed by an initial block and a surname-like word, which does
         # not break conventional ``Lastname, J.`` formatting.
         r",\s+(?=(?:[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ.\-]*\s+)+[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ'’´¨`\-]+)|"
+        # Keep OCR-degraded abbreviated names separate even when the final
+        # surname was lower-cased (for example ``Yoav Goldberg, C. J. H. un``).
+        r",\s+(?=(?:[A-Z]\.?\s*){1,3}[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’´¨`\-]{1,}(?:,|$))|"
         # Surname particles may be chained (``de las Casas`` / ``van den
         # Berg``), so consume the complete particle prefix before requiring
         # the capitalized surname.  A single-particle lookahead incorrectly

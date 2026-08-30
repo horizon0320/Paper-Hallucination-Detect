@@ -222,7 +222,9 @@ def check_cmd(
                 enriched = await enrich_with_llm(refs, opts.llm_client)
         return await verify_many(enriched, opts)
 
-    console.print(f"[dim]Parsed {len(refs)} reference(s). Checking...[/dim]")
+    # Keep machine-readable JSON/MD output clean: progress belongs on stderr
+    # so callers can redirect stdout directly to a valid artifact.
+    err_console.print(f"[dim]Parsed {len(refs)} reference(s). Checking...[/dim]")
     reports = asyncio.run(_run())
 
     if format == "json":

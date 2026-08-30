@@ -1,0 +1,5294 @@
+[
+  {
+    "reference": {
+      "raw": "Stephen Boyd and Lieven Vandenberghe. Convex optimization. Cambridge university press, 2004.",
+      "title": "Convex optimization",
+      "authors": [
+        "Stephen Boyd",
+        "Lieven Vandenberghe"
+      ],
+      "year": 2004,
+      "venue": null,
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "Convex Optimization",
+              "year": 2004,
+              "authors": [
+                "Stephen Boyd",
+                "Lieven Vandenberghe"
+              ],
+              "doi": "10.1017/cbo9780511804441",
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 0.975,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Convex Optimization",
+              "year": 2004,
+              "authors": [
+                "Stephen P. Boyd",
+                "L. Vandenberghe"
+              ],
+              "doi": "10.1017/CBO9780511804441.016",
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 0.975,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Convex Optimization",
+              "year": 2010,
+              "authors": [
+                "Stephen P. Boyd",
+                "L. Vandenberghe"
+              ],
+              "doi": "10.1002/9780470050118.ecse383",
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 0.825,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Advances in Convex Optimization",
+              "year": 2006,
+              "authors": [
+                "Stephen Boyd",
+                "Lieven Vandenberghe",
+                "Michael Grant"
+              ],
+              "doi": "10.1109/chicc.2006.280567",
+              "title_score": 0.76,
+              "author_score": 0.667,
+              "composite": 0.61,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Convex Optimization in Julia",
+              "year": 2014,
+              "authors": [
+                "Madeleine Udell",
+                "Karanveer Mohan",
+                "David Zeng",
+                "Jenny Hong",
+                "Steven Diamond",
+                "Stephen Boyd"
+              ],
+              "doi": null,
+              "title_score": 0.809,
+              "author_score": 0.5,
+              "composite": 0.595,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Convex optimization",
+              "year": 2021,
+              "authors": [
+                "Evgeniya Vorontsova",
+                "Roland Hildebrand",
+                "Alexander Gasnikov",
+                "Fedor Stonyakin"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 0.0,
+              "composite": 0.575,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Convex optimization techniques in system identification",
+              "year": 2012,
+              "authors": [
+                "Lieven Vandenberghe"
+              ],
+              "doi": "10.3182/20120711-3-be-2027.00244",
+              "title_score": 0.514,
+              "author_score": 1.0,
+              "composite": 0.557,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Learning Convex Optimization Models",
+              "year": 2020,
+              "authors": [
+                "Akshay Agrawal",
+                "Shane Barratt",
+                "Stephen Boyd"
+              ],
+              "doi": null,
+              "title_score": 0.704,
+              "author_score": 0.25,
+              "composite": 0.475,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Semidefinite Programming Relaxations of Non-Convex Problems in Control and Combinatorial Optimization",
+              "year": 1997,
+              "authors": [
+                "Stephen Boyd",
+                "Lieven Vandenberghe"
+              ],
+              "doi": "10.1007/978-1-4615-6281-8_15",
+              "title_score": 0.317,
+              "author_score": 1.0,
+              "composite": 0.449,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "FIR Filter Design via Spectral Factorization and Convex Optimization",
+              "year": 1999,
+              "authors": [
+                "Shao-Po Wu",
+                "Stephen Boyd",
+                "Lieven Vandenberghe"
+              ],
+              "doi": "10.1007/978-1-4612-0571-5_5",
+              "title_score": 0.437,
+              "author_score": 0.667,
+              "composite": 0.432,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Learner-Private Convex Optimization",
+              "year": 2021,
+              "authors": [
+                "Jiaming Xu",
+                "Kuang Xu",
+                "Dana Yang"
+              ],
+              "doi": null,
+              "title_score": 0.704,
+              "author_score": 0.0,
+              "composite": 0.412,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Predictive Online Convex Optimization",
+              "year": 2019,
+              "authors": [
+                "Antoine Lesage-Landry",
+                "Iman Shames",
+                "Joshua A. Taylor"
+              ],
+              "doi": "10.1016/j.automatica.2019.108771",
+              "title_score": 0.679,
+              "author_score": 0.0,
+              "composite": 0.398,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "CVXPY: A Python-Embedded Modeling Language for Convex Optimization",
+              "year": 2016,
+              "authors": [
+                "Steven Diamond",
+                "Stephen P. Boyd"
+              ],
+              "doi": null,
+              "title_score": 0.447,
+              "author_score": 0.333,
+              "composite": 0.354,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Exact Matrix Completion via Convex Optimization",
+              "year": 2008,
+              "authors": [
+                "E. Candès",
+                "B. Recht"
+              ],
+              "doi": "10.1145/2184319.2184343",
+              "title_score": 0.576,
+              "author_score": 0.0,
+              "composite": 0.342,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Introductory Lectures on Convex Optimization - A Basic Course",
+              "year": 2014,
+              "authors": [
+                "Y. Nesterov"
+              ],
+              "doi": null,
+              "title_score": 0.475,
+              "author_score": 0.0,
+              "composite": 0.286,
+              "via": "search"
+            },
+            {
+              "source": "dblp",
+              "title": "Computational Spectral and Ultrafast Imaging via Convex Optimization.",
+              "year": 2017,
+              "authors": [
+                "Figen S. Oktem",
+                "Liang Gao",
+                "Farzad Kamalabadi"
+              ],
+              "doi": "10.1007/978-3-319-61609-4_5",
+              "title_score": 0.432,
+              "author_score": 0.0,
+              "composite": 0.263,
+              "via": "search"
+            },
+            {
+              "source": "dblp",
+              "title": "An online convex optimization-based framework for convex bilevel optimization.",
+              "year": 2023,
+              "authors": [
+                "Lingqing Shen",
+                "Nam Ho-Nguyen",
+                "Fatma Kilinç-Karzan"
+              ],
+              "doi": "10.1007/S10107-022-01894-5",
+              "title_score": 0.392,
+              "author_score": 0.0,
+              "composite": 0.24,
+              "via": "search"
+            },
+            {
+              "source": "dblp",
+              "title": "Convex optimization for cosegmentation. (Optimization convexe pour cosegmentation).",
+              "year": 2012,
+              "authors": [
+                "Armand Joulin"
+              ],
+              "doi": null,
+              "title_score": 0.373,
+              "author_score": 0.0,
+              "composite": 0.23,
+              "via": "search"
+            },
+            {
+              "source": "dblp",
+              "title": "Improved Harris hawks optimization for non-convex function optimization and design optimization problems.",
+              "year": 2023,
+              "authors": [
+                "Helei Kang",
+                "Renyun Liu",
+                "Yifei Yao",
+                "Fanhua Yu"
+              ],
+              "doi": "10.1016/J.MATCOM.2022.09.010",
+              "title_score": 0.306,
+              "author_score": 0.0,
+              "composite": 0.194,
+              "via": "search"
+            },
+            {
+              "source": "dblp",
+              "title": "Optimization, Generalization and Non-convex Optimization With Kernel Methods. (Optimisation, Généralisation et optimisation non convexe avec les méthodes à noyaux).",
+              "year": 2024,
+              "authors": [
+                "Gaspard Beugnot"
+              ],
+              "doi": null,
+              "title_score": 0.208,
+              "author_score": 0.0,
+              "composite": 0.139,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 1.0,
+          "year_score": 1.0,
+          "venue_score": 0.5,
+          "composite": 0.975,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "Convex Optimization",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2004,
+          "best_candidate_doi": "10.1017/cbo9780511804441",
+          "best_candidate_venue": null,
+          "best_candidate_authors": [
+            "Stephen Boyd",
+            "Lieven Vandenberghe"
+          ],
+          "total_candidates": 20
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 14059.158207994187
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Stephen Boyd and Lieven Vandenberghe. Convex optimization. Cambridge university press, 2004.",
+      "title": "Convex optimization",
+      "authors": [
+        "Stephen Boyd",
+        "Lieven Vandenberghe"
+      ],
+      "year": 2004,
+      "venue": null,
+      "doi": "10.1017/cbo9780511804441",
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Federico Cassano, John Gouwar, Daniel Nguyen, Sydney Nguyen, Luna Phipps-Costin, Donald Pinckney, Ming-Ho Yee, Yangtian Zi, Carolyn Jane Anderson, Molly Q Feldman, et al. Multiple: A scalable and extensible approach to benchmarking neural code generation. arXiv preprint arXiv:2208.08227, 2022.",
+      "title": "Multiple: A scalable and extensible approach to benchmarking neural code generation",
+      "authors": [
+        "Federico Cassano",
+        "John Gouwar",
+        "Daniel Nguyen",
+        "Sydney Nguyen",
+        "Luna Phipps-Costin",
+        "Donald Pinckney",
+        "Ming-Ho Yee",
+        "Yangtian Zi",
+        "Carolyn Jane Anderson",
+        "Molly Q Feldman"
+      ],
+      "year": 2022,
+      "venue": "arXiv preprint arXiv:2208.08227, 2022",
+      "doi": null,
+      "arxiv_id": "2208.08227",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 0.994,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "arxiv",
+              "title": "MultiPL-E: A Scalable and Extensible Approach to Benchmarking Neural Code Generation",
+              "year": 2022,
+              "authors": [
+                "Federico Cassano",
+                "John Gouwar",
+                "Daniel Nguyen",
+                "Sydney Nguyen",
+                "Luna Phipps-Costin",
+                "Donald Pinckney",
+                "Ming-Ho Yee",
+                "Yangtian Zi",
+                "Carolyn Jane Anderson",
+                "Molly Q Feldman"
+              ],
+              "doi": null,
+              "title_score": 0.994,
+              "author_score": 0.75,
+              "composite": 0.95,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "MultiPL-E: A Scalable and Polyglot Approach to Benchmarking Neural Code Generation",
+              "year": 2023,
+              "authors": [
+                "Federico Cassano",
+                "John Gouwar",
+                "Daniel Nguyen",
+                "Sydney Nguyen",
+                "Luna Phipps-Costin",
+                "Donald Pinckney",
+                "Ming-Ho Yee",
+                "Yangtian Zi",
+                "Carolyn Jane Anderson",
+                "Molly Q Feldman"
+              ],
+              "doi": "10.1109/tse.2023.3267446",
+              "title_score": 0.873,
+              "author_score": 0.75,
+              "composite": 0.785,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Scalable Polar Code Construction for Successive Cancellation List Decoding: A Graph Neural Network-Based Approach",
+              "year": 2023,
+              "authors": [
+                "Yun Liao",
+                "Seyyed Ali Hashemi",
+                "Hengjie Yang",
+                "John M. Cioffi"
+              ],
+              "doi": "10.1109/tcomm.2023.3305523",
+              "title_score": 0.52,
+              "author_score": 0.0,
+              "composite": 0.402,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "A Specification-Driven Approach to Embedded FDIR Code Generation",
+              "year": 2026,
+              "authors": [
+                "Federico Bonafini",
+                "Roberto Cavada",
+                "Alessandro Cimatti",
+                "Guillermo Gomez",
+                "Stefano Tonetta"
+              ],
+              "doi": "10.1007/978-3-032-00942-5_14",
+              "title_score": 0.531,
+              "author_score": 0.0,
+              "composite": 0.303,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Knowledge Transfer from High-Resource to Low-Resource Programming Languages for Code LLMs",
+              "year": 2024,
+              "authors": [
+                "Federico Cassano",
+                "John Gouwar",
+                "Francesca Lucchetti",
+                "Claire Schlesinger",
+                "Anders Freeman",
+                "Carolyn Jane Anderson",
+                "Molly Q Feldman",
+                "Michael Greenberg",
+                "Abhinav Jangda",
+                "Arjun Guha"
+              ],
+              "doi": "10.1145/3689735",
+              "title_score": 0.349,
+              "author_score": 0.267,
+              "composite": 0.273,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "SelfCodeAlign: Self-Alignment for Code Generation",
+              "year": 2024,
+              "authors": [
+                "Yuxiang Wei",
+                "Federico Cassano",
+                "Jiawei Liu",
+                "Yifeng Ding",
+                "Naman Jain",
+                "Zachary Mueller",
+                "Harm De Vries",
+                "Leandro Von Werra",
+                "Arjun Guha",
+                "Lingming Zhang"
+              ],
+              "doi": "10.52202/079017-2008",
+              "title_score": 0.394,
+              "author_score": 0.056,
+              "composite": 0.245,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 0.994,
+          "author_score": 0.75,
+          "year_score": 1.0,
+          "venue_score": 0.238,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 0.95,
+          "source": "arxiv",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "MultiPL-E: A Scalable and Extensible Approach to Benchmarking Neural Code Generation",
+          "best_candidate_source": "arxiv",
+          "best_candidate_year": 2022,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv",
+          "best_candidate_authors": [
+            "Federico Cassano",
+            "John Gouwar",
+            "Daniel Nguyen",
+            "Sydney Nguyen",
+            "Luna Phipps-Costin",
+            "Donald Pinckney",
+            "Ming-Ho Yee",
+            "Yangtian Zi",
+            "Carolyn Jane Anderson",
+            "Molly Q Feldman",
+            "Arjun Guha",
+            "Michael Greenberg",
+            "Abhinav Jangda"
+          ],
+          "total_candidates": 7
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 54479.10683299415
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Federico Cassano, John Gouwar, Daniel Nguyen, Sydney Nguyen, Luna Phipps-Costin, Donald Pinckney, Ming-Ho Yee, Yangtian Zi, Carolyn Jane Anderson, Molly Q Feldman, et al. Multiple: A scalable and extensible approach to benchmarking neural code generation. arXiv preprint arXiv:2208.08227, 2022.",
+      "title": "Multiple: A scalable and extensible approach to benchmarking neural code generation",
+      "authors": [
+        "Federico Cassano",
+        "John Gouwar",
+        "Daniel Nguyen",
+        "Sydney Nguyen",
+        "Luna Phipps-Costin",
+        "Donald Pinckney",
+        "Ming-Ho Yee",
+        "Yangtian Zi",
+        "Carolyn Jane Anderson",
+        "Molly Q Feldman"
+      ],
+      "year": 2022,
+      "venue": "arXiv preprint arXiv:2208.08227, 2022",
+      "doi": null,
+      "arxiv_id": "2208.08227",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John Schulman. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168, 2021.",
+      "title": "Training verifiers to solve math word problems",
+      "authors": [
+        "Karl Cobbe",
+        "Vineet Kosaraju",
+        "Mohammad Bavarian",
+        "Mark Chen",
+        "Heewoo Jun",
+        "Lukasz Kaiser",
+        "Matthias Plappert",
+        "Jerry Tworek",
+        "Jacob Hilton",
+        "Reiichiro Nakano",
+        "Christopher Hesse",
+        "John Schulman"
+      ],
+      "year": 2021,
+      "venue": "arXiv preprint arXiv:2110.14168, 2021",
+      "doi": null,
+      "arxiv_id": "2110.14168",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "semantic_scholar",
+              "title": "Training Verifiers to Solve Math Word Problems",
+              "year": 2021,
+              "authors": [
+                "K. Cobbe",
+                "Vineet Kosaraju",
+                "Mo Bavarian",
+                "Mark Chen",
+                "Heewoo Jun",
+                "Lukasz Kaiser",
+                "Matthias Plappert",
+                "Jerry Tworek",
+                "Jacob Hilton",
+                "Reiichiro Nakano"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "arxiv",
+              "title": "Training Verifiers to Solve Math Word Problems",
+              "year": 2021,
+              "authors": [
+                "Karl Cobbe",
+                "Vineet Kosaraju",
+                "Mohammad Bavarian",
+                "Mark Chen",
+                "Heewoo Jun",
+                "Lukasz Kaiser",
+                "Matthias Plappert",
+                "Jerry Tworek",
+                "Jacob Hilton",
+                "Reiichiro Nakano"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "Should the Church Solve the World's Problems?",
+              "year": 1967,
+              "authors": [
+                "Karl Rahner"
+              ],
+              "doi": "10.5840/listening1967212",
+              "title_score": 0.571,
+              "author_score": 0.0,
+              "composite": 0.323,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Trading spaces: A promissory note to solve relational mapping problems",
+              "year": 1997,
+              "authors": [
+                "Karl Haberlandt"
+              ],
+              "doi": "10.1017/s0140525x97310024",
+              "title_score": 0.5,
+              "author_score": 0.0,
+              "composite": 0.289,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "ISIS 3: the last word on thrombolysis?",
+              "year": 1992,
+              "authors": [
+                "S. Cobbe"
+              ],
+              "doi": "10.1136/bmj.304.6840.1454",
+              "title_score": 0.405,
+              "author_score": 0.0,
+              "composite": 0.223,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Kepler’s conjecture: How some of the greatest minds in history helped solve one of the oldest math problems in the world",
+              "year": 2004,
+              "authors": [
+                "Karl Sigmund"
+              ],
+              "doi": "10.1007/bf02985408",
+              "title_score": 0.373,
+              "author_score": 0.0,
+              "composite": 0.214,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "The Changing Nature of Dependence: Economic Problems in Lesotho",
+              "year": 1983,
+              "authors": [
+                "James Cobbe"
+              ],
+              "doi": "10.1017/s0022278x00023284",
+              "title_score": 0.33,
+              "author_score": 0.0,
+              "composite": 0.195,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 1.0,
+          "year_score": 1.0,
+          "venue_score": 0.304,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 1.0,
+          "source": "semantic_scholar",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "Training Verifiers to Solve Math Word Problems",
+          "best_candidate_source": "semantic_scholar",
+          "best_candidate_year": 2021,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv.org",
+          "best_candidate_authors": [
+            "K. Cobbe",
+            "Vineet Kosaraju",
+            "Mo Bavarian",
+            "Mark Chen",
+            "Heewoo Jun",
+            "Lukasz Kaiser",
+            "Matthias Plappert",
+            "Jerry Tworek",
+            "Jacob Hilton",
+            "Reiichiro Nakano",
+            "Christopher Hesse",
+            "John Schulman"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 55216.52291700593
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John Schulman. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168, 2021.",
+      "title": "Training verifiers to solve math word problems",
+      "authors": [
+        "Karl Cobbe",
+        "Vineet Kosaraju",
+        "Mohammad Bavarian",
+        "Mark Chen",
+        "Heewoo Jun",
+        "Lukasz Kaiser",
+        "Matthias Plappert",
+        "Jerry Tworek",
+        "Jacob Hilton",
+        "Reiichiro Nakano",
+        "Christopher Hesse",
+        "John Schulman"
+      ],
+      "year": 2021,
+      "venue": "arXiv preprint arXiv:2110.14168, 2021",
+      "doi": null,
+      "arxiv_id": "2110.14168",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Leo Gao, John Schulman, and Jacob Hilton. Scaling laws for reward model overoptimization. In International Conference on Machine Learning, pp. 10835–10866. PMLR, 2023.",
+      "title": "Scaling laws for reward model overoptimization",
+      "authors": [
+        "Leo Gao",
+        "John Schulman",
+        "Jacob Hilton"
+      ],
+      "year": 2023,
+      "venue": "In International Conference on Machine Learning, pp. 10835–10866. PMLR, 2023",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "arxiv",
+              "title": "Scaling Laws for Reward Model Overoptimization",
+              "year": 2022,
+              "authors": [
+                "Leo Gao",
+                "John Schulman",
+                "Jacob Hilton"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 0.909,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Scaling Laws for Reward Model Overoptimization in Direct Alignment Algorithms",
+              "year": 2024,
+              "authors": [
+                "Rafael Rafailov",
+                "Yaswanth Chittepu",
+                "Ryan Park",
+                "Harshit Sikchi",
+                "Joey Hejna",
+                "Bradley Knox",
+                "Chelsea Finn",
+                "Scott Niekum"
+              ],
+              "doi": null,
+              "title_score": 0.748,
+              "author_score": 0.0,
+              "composite": 0.52,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Gemstones: A Model Suite for Multi-Faceted Scaling Laws",
+              "year": 2025,
+              "authors": [
+                "Sean McLeish",
+                "John Kirchenbauer",
+                "David Miller",
+                "Siddharth Singh",
+                "Abhinav Bhatele",
+                "Micah Goldblum",
+                "Ashwinee Panda",
+                "Tom Goldstein"
+              ],
+              "doi": "10.52202/085713-4114",
+              "title_score": 0.574,
+              "author_score": 0.0,
+              "composite": 0.338,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "SCALING LAWS FOR ISING MODELS NEAR T<sub>c</sub>",
+              "year": 1993,
+              "authors": [
+                "LEO P. KADANOFF"
+              ],
+              "doi": "10.1142/9789812798763_0011",
+              "title_score": 0.574,
+              "author_score": 0.0,
+              "composite": 0.335,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Power laws",
+              "year": 2022,
+              "authors": [
+                "L. S. Schulman"
+              ],
+              "doi": "10.1093/oso/9780198861881.003.0007",
+              "title_score": 0.321,
+              "author_score": 0.0,
+              "composite": 0.294,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "On inertial-range scaling laws",
+              "year": 1996,
+              "authors": [
+                "John C. Bowman"
+              ],
+              "doi": "10.1017/s0022112096001279",
+              "title_score": 0.447,
+              "author_score": 0.0,
+              "composite": 0.261,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Solenoidal Scaling Laws for Compressible Mixing",
+              "year": 2019,
+              "authors": [
+                "John Panickacheril John",
+                "Diego A. Donzis",
+                "Katepalli R. Sreenivasan"
+              ],
+              "doi": "10.1103/physrevlett.123.224501",
+              "title_score": 0.452,
+              "author_score": 0.0,
+              "composite": 0.259,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 1,
+          "title_score": 1.0,
+          "author_score": 1.0,
+          "year_score": 0.7,
+          "venue_score": 0.074,
+          "composite": 0.909,
+          "source": "arxiv",
+          "via": "search",
+          "best_candidate_title": "Scaling Laws for Reward Model Overoptimization",
+          "best_candidate_source": "arxiv",
+          "best_candidate_year": 2022,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv",
+          "best_candidate_authors": [
+            "Leo Gao",
+            "John Schulman",
+            "Jacob Hilton"
+          ],
+          "total_candidates": 7
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 28137.171250011306
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Leo Gao, John Schulman, and Jacob Hilton. Scaling laws for reward model overoptimization. In International Conference on Machine Learning, pp. 10835–10866. PMLR, 2023.",
+      "title": "Scaling laws for reward model overoptimization",
+      "authors": [
+        "Leo Gao",
+        "John Schulman",
+        "Jacob Hilton"
+      ],
+      "year": 2023,
+      "venue": "In International Conference on Machine Learning, pp. 10835–10866. PMLR, 2023",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Aryo Pradipta Gema, Joshua Ong Jun Leang, Giwon Hong, Alessio Devoto, Alberto Carlo Maria Mancino, Rohit Saxena, Xuanli He, Yu Zhao, Xiaotang Du, Mohammad Reza Ghasemi Madani, et al. Are we done with mmlu? In Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pp. 5069–5096, 2025.",
+      "title": "Are we done with mmlu?",
+      "authors": [
+        "Aryo Pradipta Gema",
+        "Joshua Ong Jun Leang",
+        "Giwon Hong",
+        "Alessio Devoto",
+        "Alberto Carlo Maria Mancino",
+        "Rohit Saxena",
+        "Xuanli He",
+        "Yu Zhao",
+        "Xiaotang Du",
+        "Mohammad Reza Ghasemi Madani"
+      ],
+      "year": 2025,
+      "venue": "In Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pp. 5069–5096, 2025",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "Are We Done with MMLU?",
+              "year": 2025,
+              "authors": [
+                "Aryo Pradipta Gema",
+                "Joshua Ong Jun Leang",
+                "Giwon Hong",
+                "Alessio Devoto",
+                "Alberto Carlo Maria Mancino",
+                "Rohit Saxena",
+                "Xuanli He",
+                "Yu Zhao",
+                "Xiaotang Du",
+                "Mohammad Reza Ghasemi Madani"
+              ],
+              "doi": "10.18653/v1/2025.naacl-long.262",
+              "title_score": 1.0,
+              "author_score": 0.625,
+              "composite": 0.903,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Are We Done with MMLU?",
+              "year": 2024,
+              "authors": [
+                "Aryo Pradipta Gema",
+                "Joshua Ong Jun Leang",
+                "Giwon Hong",
+                "Alessio Devoto",
+                "Alberto Carlo Maria Mancino",
+                "Rohit Saxena",
+                "Xuanli He",
+                "Yu Zhao",
+                "Xiaotang Du",
+                "Mohammad Reza Ghasemi Madani"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 0.625,
+              "composite": 0.813,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "“Getting It Done”",
+              "year": 2020,
+              "authors": [
+                "Alexander Jun"
+              ],
+              "doi": "10.4324/9781315829364-7",
+              "title_score": 0.41,
+              "author_score": 0.0,
+              "composite": 0.234,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Voting: The Biggest Challenge and What Can Be Done",
+              "year": 2004,
+              "authors": [
+                "Don Nakanishi",
+                "Paul Ong"
+              ],
+              "doi": "10.17953/appc.2.2.m16j19543017650u",
+              "title_score": 0.333,
+              "author_score": 0.0,
+              "composite": 0.195,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "What we talk about when we talk about space and narrative (and why we’re not done talking about it)",
+              "year": 2018,
+              "authors": [
+                "Joshua Parker"
+              ],
+              "doi": "10.1515/fns-2018-0017",
+              "title_score": 0.248,
+              "author_score": 0.0,
+              "composite": 0.146,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "How Work Gets Done: Understanding Organizational Reality",
+              "year": 2014,
+              "authors": [
+                "Joshua Mittler"
+              ],
+              "doi": "10.1037/e573792014-020",
+              "title_score": 0.256,
+              "author_score": 0.0,
+              "composite": 0.146,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 0.625,
+          "year_score": 1.0,
+          "venue_score": 0.936,
+          "composite": 0.903,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "Are We Done with MMLU?",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2025,
+          "best_candidate_doi": "10.18653/v1/2025.naacl-long.262",
+          "best_candidate_venue": "Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)",
+          "best_candidate_authors": [
+            "Aryo Pradipta Gema",
+            "Joshua Ong Jun Leang",
+            "Giwon Hong",
+            "Alessio Devoto",
+            "Alberto Carlo Maria Mancino",
+            "Rohit Saxena",
+            "Xuanli He",
+            "Yu Zhao",
+            "Xiaotang Du",
+            "Mohammad Reza Ghasemi Madani",
+            "Claire Barale",
+            "Robert McHardy",
+            "Joshua Harris",
+            "Jean Kaddour",
+            "Emile Van Krieken",
+            "Pasquale Minervini"
+          ],
+          "total_candidates": 6
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 39628.87575000059
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Aryo Pradipta Gema, Joshua Ong Jun Leang, Giwon Hong, Alessio Devoto, Alberto Carlo Maria Mancino, Rohit Saxena, Xuanli He, Yu Zhao, Xiaotang Du, Mohammad Reza Ghasemi Madani, et al. Are we done with mmlu? In Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pp. 5069–5096, 2025.",
+      "title": "Are we done with mmlu?",
+      "authors": [
+        "Aryo Pradipta Gema",
+        "Joshua Ong Jun Leang",
+        "Giwon Hong",
+        "Alessio Devoto",
+        "Alberto Carlo Maria Mancino",
+        "Rohit Saxena",
+        "Xuanli He",
+        "Yu Zhao",
+        "Xiaotang Du",
+        "Mohammad Reza Ghasemi Madani"
+      ],
+      "year": 2025,
+      "venue": "In Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pp. 5069–5096, 2025",
+      "doi": "10.18653/v1/2025.naacl-long.262",
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul Arora, Steven Basart, Eric Tang, Dawn Song, and Jacob Steinhardt. Measuring mathematical problem solving with the math dataset. arXiv preprint arXiv:2103.03874, 2021.",
+      "title": "Measuring mathematical problem solving with the math dataset",
+      "authors": [
+        "Dan Hendrycks",
+        "Collin Burns",
+        "Saurav Kadavath",
+        "Akul Arora",
+        "Steven Basart",
+        "Eric Tang",
+        "Dawn Song",
+        "Jacob Steinhardt"
+      ],
+      "year": 2021,
+      "venue": "arXiv preprint arXiv:2103.03874, 2021",
+      "doi": null,
+      "arxiv_id": "2103.03874",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "semantic_scholar",
+              "title": "Measuring Mathematical Problem Solving With the MATH Dataset",
+              "year": 2021,
+              "authors": [
+                "Dan Hendrycks",
+                "Collin Burns",
+                "Saurav Kadavath",
+                "Akul Arora",
+                "Steven Basart",
+                "Eric Tang",
+                "D. Song",
+                "J. Steinhardt"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "arxiv",
+              "title": "Measuring Mathematical Problem Solving With the MATH Dataset",
+              "year": 2021,
+              "authors": [
+                "Dan Hendrycks",
+                "Collin Burns",
+                "Saurav Kadavath",
+                "Akul Arora",
+                "Steven Basart",
+                "Eric Tang",
+                "Dawn Song",
+                "Jacob Steinhardt"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "Solving the Collective Action Problem",
+              "year": 2012,
+              "authors": [
+                "Jennifer Burns Stillman"
+              ],
+              "doi": "10.1057/9781137009005_4",
+              "title_score": 0.557,
+              "author_score": 0.0,
+              "composite": 0.316,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Introducing Division Through Problem-Solving Experiences",
+              "year": 1991,
+              "authors": [
+                "Marilyn Burns"
+              ],
+              "doi": "10.5951/at.38.8.0014",
+              "title_score": 0.534,
+              "author_score": 0.0,
+              "composite": 0.308,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "How to Teach Problem Solving",
+              "year": 1982,
+              "authors": [
+                "Marilyn Burns"
+              ],
+              "doi": "10.5951/at.29.6.0046",
+              "title_score": 0.5,
+              "author_score": 0.0,
+              "composite": 0.289,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Problem Solving: Tips For Teachers",
+              "year": 1988,
+              "authors": [
+                "Marilyn Burns"
+              ],
+              "doi": "10.5951/at.35.9.0030",
+              "title_score": 0.489,
+              "author_score": 0.0,
+              "composite": 0.283,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Problem Solving: Tips For Teachers",
+              "year": 1987,
+              "authors": [
+                "John Van de Walle",
+                "Marilyn Burns"
+              ],
+              "doi": "10.5951/at.35.1.0024",
+              "title_score": 0.489,
+              "author_score": 0.0,
+              "composite": 0.283,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 1.0,
+          "year_score": 1.0,
+          "venue_score": 0.265,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 1.0,
+          "source": "semantic_scholar",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "Measuring Mathematical Problem Solving With the MATH Dataset",
+          "best_candidate_source": "semantic_scholar",
+          "best_candidate_year": 2021,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "NeurIPS Datasets and Benchmarks",
+          "best_candidate_authors": [
+            "Dan Hendrycks",
+            "Collin Burns",
+            "Saurav Kadavath",
+            "Akul Arora",
+            "Steven Basart",
+            "Eric Tang",
+            "D. Song",
+            "J. Steinhardt"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 47044.56437501358
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul Arora, Steven Basart, Eric Tang, Dawn Song, and Jacob Steinhardt. Measuring mathematical problem solving with the math dataset. arXiv preprint arXiv:2103.03874, 2021.",
+      "title": "Measuring mathematical problem solving with the math dataset",
+      "authors": [
+        "Dan Hendrycks",
+        "Collin Burns",
+        "Saurav Kadavath",
+        "Akul Arora",
+        "Steven Basart",
+        "Eric Tang",
+        "Dawn Song",
+        "Jacob Steinhardt"
+      ],
+      "year": 2021,
+      "venue": "arXiv preprint arXiv:2103.03874, 2021",
+      "doi": null,
+      "arxiv_id": "2103.03874",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Amirhossein Kazemnejad, Milad Aghajohari, Eva Portelance, Alessandro Sordoni, Siva Reddy, Aaron Courville, and Nicolas Le Roux. VINE-PPO: Unlocking RL potential for LLM reasoning through refined credit assignment. In The Twelfth International Conference on Learning Representations, ICLR 2024, 2024. URL https://openreview.net/forum? id=b5U7s30M42.",
+      "title": "VINE-PPO: Unlocking RL potential for LLM reasoning through refined credit assignment",
+      "authors": [
+        "Amirhossein Kazemnejad",
+        "Milad Aghajohari",
+        "Eva Portelance",
+        "Alessandro Sordoni",
+        "Siva Reddy",
+        "Aaron Courville",
+        "Nicolas Le Roux"
+      ],
+      "year": 2024,
+      "venue": "In The Twelfth International Conference on Learning Representations, ICLR 2024, 2024",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [
+        "https://openreview.net/forum?"
+      ],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "FAIL",
+        "confidence": 0.7,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "arxiv",
+              "title": "V-STaR: Training Verifiers for Self-Taught Reasoners",
+              "year": 2024,
+              "authors": [
+                "Arian Hosseini",
+                "Xingdi Yuan",
+                "Nikolay Malkin",
+                "Aaron Courville",
+                "Alessandro Sordoni",
+                "Rishabh Agarwal"
+              ],
+              "doi": null,
+              "title_score": 0.382,
+              "author_score": 0.182,
+              "composite": 0.409,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "The Promise of RL for Autoregressive Image Editing",
+              "year": 2025,
+              "authors": [
+                "Saba Ahmadi",
+                "Rabiul Awal",
+                "Ankur Sikarwar",
+                "Amirhossein Kazemnejad",
+                "Ge Ya Luo",
+                "Juan Rodriguez",
+                "Sai Rajeswar Mudumba",
+                "Siva Reddy",
+                "Chris Pal",
+                "Benno Krojer"
+              ],
+              "doi": "10.52202/085713-3918",
+              "title_score": 0.448,
+              "author_score": 0.125,
+              "composite": 0.404,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Unlocking the potential of deep eutectic solvents for sustainable pectin extraction",
+              "year": 2025,
+              "authors": [
+                "Milad Hadidi",
+                "Mohammad Tarahi",
+                "David Julian McClements",
+                "Fatemeh Aghababaei"
+              ],
+              "doi": "10.1016/j.carbpol.2025.123683",
+              "title_score": 0.491,
+              "author_score": 0.0,
+              "composite": 0.386,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Caskow: Context-Aware Stance Detection Using External Knowledge-Augmented LLM",
+              "year": 2025,
+              "authors": [
+                "Maryam Shafiei",
+                "Hossein Rahmani",
+                "Amirhossein Derakhshan",
+                "Milad Allahgholi"
+              ],
+              "doi": "10.1109/icwr65219.2025.11006205",
+              "title_score": 0.41,
+              "author_score": 0.0,
+              "composite": 0.36,
+              "via": "search"
+            },
+            {
+              "source": "web",
+              "title": "OpenReview",
+              "year": null,
+              "authors": [],
+              "doi": null,
+              "title_score": 0.191,
+              "author_score": 0.5,
+              "composite": 0.33,
+              "via": "url_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "Depth-Constrained ASV Navigation with Deep RL and Limited Sensing_supp1-3625520.mp4",
+              "year": null,
+              "authors": [
+                "Amirhossein Zhalehmehrabi"
+              ],
+              "doi": "10.1109/lra.2025.3625520/mm1",
+              "title_score": 0.347,
+              "author_score": 0.0,
+              "composite": 0.291,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Microwave and radio frequency drying: Unlocking the potential of AI and mL",
+              "year": 2026,
+              "authors": [
+                "Amirhossein Barzigar",
+                "S.M Hosseinalipour"
+              ],
+              "doi": "10.1080/07373937.2026.2665981",
+              "title_score": 0.494,
+              "author_score": 0.0,
+              "composite": 0.281,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 0,
+          "title_score": 0.382,
+          "author_score": 0.182,
+          "year_score": 1.0,
+          "venue_score": 0.067,
+          "composite": 0.409,
+          "source": "arxiv",
+          "via": "search",
+          "best_candidate_title": "V-STaR: Training Verifiers for Self-Taught Reasoners",
+          "best_candidate_source": "arxiv",
+          "best_candidate_year": 2024,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv",
+          "best_candidate_authors": [
+            "Arian Hosseini",
+            "Xingdi Yuan",
+            "Nikolay Malkin",
+            "Aaron Courville",
+            "Alessandro Sordoni",
+            "Rishabh Agarwal"
+          ],
+          "total_candidates": 7
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 14,
+          "elapsed_ms": 32635.36054099677
+        }
+      }
+    ],
+    "overall_verdict": "NOT_FOUND",
+    "notes": [
+      "Could not verify this reference in any scholarly database. It may be obscure, not yet indexed, or affected by a search/parser limitation. Manual review recommended."
+    ],
+    "enriched": {
+      "raw": "Amirhossein Kazemnejad, Milad Aghajohari, Eva Portelance, Alessandro Sordoni, Siva Reddy, Aaron Courville, and Nicolas Le Roux. VINE-PPO: Unlocking RL potential for LLM reasoning through refined credit assignment. In The Twelfth International Conference on Learning Representations, ICLR 2024, 2024. URL https://openreview.net/forum? id=b5U7s30M42.",
+      "title": "VINE-PPO: Unlocking RL potential for LLM reasoning through refined credit assignment",
+      "authors": [
+        "Amirhossein Kazemnejad",
+        "Milad Aghajohari",
+        "Eva Portelance",
+        "Alessandro Sordoni",
+        "Siva Reddy",
+        "Aaron Courville",
+        "Nicolas Le Roux"
+      ],
+      "year": 2024,
+      "venue": "In The Twelfth International Conference on Learning Representations, ICLR 2024, 2024",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [
+        "https://openreview.net/forum?"
+      ],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Yangzhou Liu, Yue Cao, Zhangwei Gao, Weiyun Wang, Zhe Chen, Wenhai Wang, Hao Tian, Lewei Lu, Xizhou Zhu, and Tong Lu. Mminstruct: A high-quality multi-modal instruction tuning dataset with extensive diversity. Science China Information Sciences, 67(12):220103, 2024.",
+      "title": "Mminstruct: A high-quality multi-modal instruction tuning dataset with extensive diversity",
+      "authors": [
+        "Yangzhou Liu",
+        "Yue Cao",
+        "Zhangwei Gao",
+        "Weiyun Wang",
+        "Zhe Chen",
+        "Wenhai Wang",
+        "Hao Tian",
+        "Lewei Lu",
+        "Xizhou Zhu",
+        "Tong Lu"
+      ],
+      "year": 2024,
+      "venue": null,
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "MMInstruct: a high-quality multi-modal instruction tuning dataset with extensive diversity",
+              "year": 2024,
+              "authors": [
+                "Yangzhou Liu",
+                "Yue Cao",
+                "Zhangwei Gao",
+                "Weiyun Wang",
+                "Zhe Chen",
+                "Wenhai Wang",
+                "Hao Tian",
+                "Lewei Lu",
+                "Xizhou Zhu",
+                "Tong Lu"
+              ],
+              "doi": "10.1007/s11432-024-4187-3",
+              "title_score": 1.0,
+              "author_score": 0.8,
+              "composite": 0.925,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "MMInstruct: A High-Quality Multi-Modal Instruction Tuning Dataset with Extensive Diversity",
+              "year": 2024,
+              "authors": [
+                "Yangzhou Liu",
+                "Yue Cao",
+                "Zhangwei Gao",
+                "Weiyun Wang",
+                "Zhe Chen",
+                "Wenhai Wang",
+                "Hao Tian",
+                "Lewei Lu",
+                "Xizhou Zhu",
+                "Tong Lu"
+              ],
+              "doi": "10.1007/s11432-024-4187-3",
+              "title_score": 1.0,
+              "author_score": 0.8,
+              "composite": 0.925,
+              "via": "search"
+            },
+            {
+              "source": "dblp",
+              "title": "MMInstruct: a high-quality multi-modal instruction tuning dataset with extensive diversity.",
+              "year": 2024,
+              "authors": [
+                "Yangzhou Liu",
+                "Yue Cao",
+                "Zhangwei Gao",
+                "Weiyun Wang",
+                "Zhe Chen",
+                "Wenhai Wang",
+                "Hao Tian",
+                "Lewei Lu",
+                "Xizhou Zhu",
+                "Tong Lu"
+              ],
+              "doi": "10.1007/S11432-024-4187-3",
+              "title_score": 0.994,
+              "author_score": 0.8,
+              "composite": 0.922,
+              "via": "search"
+            },
+            {
+              "source": "dblp",
+              "title": "MMInstruct: A High-Quality Multi-Modal Instruction Tuning Dataset with Extensive Diversity.",
+              "year": 2024,
+              "authors": [
+                "Yangzhou Liu",
+                "Yue Cao",
+                "Zhangwei Gao",
+                "Weiyun Wang",
+                "Zhe Chen",
+                "Wenhai Wang",
+                "Hao Tian",
+                "Lewei Lu",
+                "Xizhou Zhu",
+                "Tong Lu"
+              ],
+              "doi": "10.48550/ARXIV.2407.15838",
+              "title_score": 0.994,
+              "author_score": 0.8,
+              "composite": 0.922,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Otter: A Multi-Modal Model With In-Context Instruction Tuning",
+              "year": 2025,
+              "authors": [
+                "Bo Li",
+                "Yuanhan Zhang",
+                "Liangyu Chen",
+                "Jinghao Wang",
+                "Fanyi Pu",
+                "Joshua Adrian Cahyono",
+                "Jingkang Yang",
+                "Chunyuan Li",
+                "Ziwei Liu"
+              ],
+              "doi": "10.1109/tpami.2025.3571946",
+              "title_score": 0.596,
+              "author_score": -0.077,
+              "composite": 0.439,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "3DMIT: 3D Multi-Modal Instruction Tuning for Scene Understanding",
+              "year": 2024,
+              "authors": [
+                "Zeju Li",
+                "Chao Zhang",
+                "Xiaoyan Wang",
+                "Ruilong Ren",
+                "Yifan Xu",
+                "Ruifei Ma",
+                "Xiangde Liu",
+                "Rong Wei"
+              ],
+              "doi": "10.1109/icmew63481.2024.10645462",
+              "title_score": 0.506,
+              "author_score": -0.071,
+              "composite": 0.436,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "LAMM: Language-Assisted Multi-Modal Instruction-Tuning Dataset, Framework, and Benchmark",
+              "year": 2023,
+              "authors": [
+                "Zhenfei Yin",
+                "Jiong Wang",
+                "Jianjian Cao",
+                "Zhelun Shi",
+                "Dingning Liu",
+                "Mukai Li",
+                "Xiaoshui Huang",
+                "Zhiyong Wang",
+                "Lu Sheng",
+                "Lei Bai"
+              ],
+              "doi": "10.52202/075280-1158",
+              "title_score": 0.472,
+              "author_score": -0.062,
+              "composite": 0.374,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Collaborative Multi-Modal Coding for High-Quality 3D Generation",
+              "year": 2026,
+              "authors": [
+                "Ziang Cao",
+                "Zhaoxi Chen",
+                "Liang Pan",
+                "Ziwei Liu"
+              ],
+              "doi": "10.1109/tpami.2026.3674943",
+              "title_score": 0.497,
+              "author_score": 0.25,
+              "composite": 0.361,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 3,
+          "title_score": 1.0,
+          "author_score": 0.8,
+          "year_score": 1.0,
+          "venue_score": 0.5,
+          "composite": 0.925,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "MMInstruct: a high-quality multi-modal instruction tuning dataset with extensive diversity",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2024,
+          "best_candidate_doi": "10.1007/s11432-024-4187-3",
+          "best_candidate_venue": "Science China Information Sciences",
+          "best_candidate_authors": [
+            "Yangzhou Liu",
+            "Yue Cao",
+            "Zhangwei Gao",
+            "Weiyun Wang",
+            "Zhe Chen",
+            "Wenhai Wang",
+            "Hao Tian",
+            "Lewei Lu",
+            "Xizhou Zhu",
+            "Tong Lu",
+            "Yu Qiao",
+            "Jifeng Dai"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 19385.30404199264
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Yangzhou Liu, Yue Cao, Zhangwei Gao, Weiyun Wang, Zhe Chen, Wenhai Wang, Hao Tian, Lewei Lu, Xizhou Zhu, and Tong Lu. Mminstruct: A high-quality multi-modal instruction tuning dataset with extensive diversity. Science China Information Sciences, 67(12):220103, 2024.",
+      "title": "Mminstruct: A high-quality multi-modal instruction tuning dataset with extensive diversity",
+      "authors": [
+        "Yangzhou Liu",
+        "Yue Cao",
+        "Zhangwei Gao",
+        "Weiyun Wang",
+        "Zhe Chen",
+        "Wenhai Wang",
+        "Hao Tian",
+        "Lewei Lu",
+        "Xizhou Zhu",
+        "Tong Lu"
+      ],
+      "year": 2024,
+      "venue": "Science China Information Sciences",
+      "doi": "10.1007/s11432-024-4187-3",
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "ModelScope Community. AI-ModelScope/CodeAlpaca-20k. https://huggingface.co/datasets/AI-ModelScope/CodeAlpaca-20k, 2023.",
+      "title": "AI-ModelScope/CodeAlpaca-20k",
+      "authors": [
+        "ModelScope Community"
+      ],
+      "year": 2023,
+      "venue": null,
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [
+        "https://huggingface.co/datasets/AI-ModelScope/CodeAlpaca-20k"
+      ],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "FAIL",
+        "confidence": 0.7,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "Exploring the Correlation between Students' Attitudes towards AI and Their Learning Outcomes",
+              "year": 2024,
+              "authors": [
+                "Dr. Neilson D. Bation",
+                "Dr. Jovertlee C. Pudan, EnP"
+              ],
+              "doi": "10.47191/ijsshr/v7-i02-45",
+              "title_score": 0.233,
+              "author_score": 0.0,
+              "composite": 0.258,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Improving AI Planning using Map Reduce",
+              "year": 2020,
+              "authors": [
+                "Mohamed Elkawkagy*",
+                "Heba Elbeh"
+              ],
+              "doi": "10.35940/ijitee.d1309.029420",
+              "title_score": 0.273,
+              "author_score": 0.0,
+              "composite": 0.175,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Governance of AI Writing Tools: A New Priority for Medical Journals",
+              "year": 2026,
+              "authors": [
+                "Raja D"
+              ],
+              "doi": "10.24321/2278.2044.202541",
+              "title_score": 0.232,
+              "author_score": 0.0,
+              "composite": 0.152,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Mitigating Artificial Intelligence (AI) use in online exams",
+              "year": 2025,
+              "authors": [
+                "David Voorhees"
+              ],
+              "doi": "10.1130/abs/2025am-8438",
+              "title_score": 0.23,
+              "author_score": 0.0,
+              "composite": 0.151,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "664. ENHANCING RESILIENCE IN LEVERAGING DIGITAL THERAPEUTICS, AI, AS GOLDEN HOUR OPPORTUNITIES FOR PERSONALIZED INTERVENTIONS IN PREVENTION AND TREATMENT OF PTSD",
+              "year": 2025,
+              "authors": [
+                "E Vermetten",
+                "I Frankova",
+                "J Zohar"
+              ],
+              "doi": "10.1093/ijnp/pyaf052.404",
+              "title_score": 0.18,
+              "author_score": 0.0,
+              "composite": 0.124,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 0,
+          "title_score": 0.233,
+          "author_score": 0.0,
+          "year_score": 0.7,
+          "venue_score": 0.5,
+          "composite": 0.258,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "Exploring the Correlation between Students' Attitudes towards AI and Their Learning Outcomes",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2024,
+          "best_candidate_doi": "10.47191/ijsshr/v7-i02-45",
+          "best_candidate_venue": "International Journal of Social Science and Human Research",
+          "best_candidate_authors": [
+            "Dr. Neilson D. Bation",
+            "Dr. Jovertlee C. Pudan, EnP"
+          ],
+          "total_candidates": 5
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 14,
+          "elapsed_ms": 60944.37416602159
+        }
+      }
+    ],
+    "overall_verdict": "NOT_FOUND",
+    "notes": [
+      "Could not verify this reference in any scholarly database. It may be obscure, not yet indexed, or affected by a search/parser limitation. Manual review recommended."
+    ],
+    "enriched": {
+      "raw": "ModelScope Community. AI-ModelScope/CodeAlpaca-20k. https://huggingface.co/datasets/AI-ModelScope/CodeAlpaca-20k, 2023.",
+      "title": "AI-ModelScope/CodeAlpaca-20k",
+      "authors": [
+        "ModelScope Community"
+      ],
+      "year": 2023,
+      "venue": "International Journal of Social Science and Human Research",
+      "doi": "10.47191/ijsshr/v7-i02-45",
+      "arxiv_id": null,
+      "urls": [
+        "https://huggingface.co/datasets/AI-ModelScope/CodeAlpaca-20k"
+      ],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Open-R1 Community. Verifiable Coding Problems Python 10k. https://huggingface.co/datasets/open-r1/verifiable-coding-problems-python-10k, 2024.",
+      "title": "Verifiable Coding Problems Python 10k",
+      "authors": [
+        "Open-R1 Community"
+      ],
+      "year": 2024,
+      "venue": null,
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [
+        "https://huggingface.co/datasets/open-r1/verifiable-coding-problems-python-10k"
+      ],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "FAIL",
+        "confidence": 0.7,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "Dropping Python 2.3 Support",
+              "year": 2009,
+              "authors": [],
+              "doi": "10.59350/kc3w6-jc060",
+              "title_score": 0.438,
+              "author_score": 0.5,
+              "composite": 0.391,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Biopython dropping Python 2.4 Support?",
+              "year": 2010,
+              "authors": [],
+              "doi": "10.59350/s9x92-mcg77",
+              "title_score": 0.4,
+              "author_score": 0.5,
+              "composite": 0.37,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Biopython and Python 2.6 (and Python 2.3)",
+              "year": 2008,
+              "authors": [],
+              "doi": "10.59350/3yzz2-ezd22",
+              "title_score": 0.359,
+              "author_score": 0.5,
+              "composite": 0.347,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 0,
+          "title_score": 0.438,
+          "author_score": 0.5,
+          "year_score": 0.0,
+          "venue_score": 0.5,
+          "composite": 0.391,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "Dropping Python 2.3 Support",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2009,
+          "best_candidate_doi": "10.59350/kc3w6-jc060",
+          "best_candidate_venue": null,
+          "best_candidate_authors": [],
+          "total_candidates": 5
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 14,
+          "elapsed_ms": 53210.08154199808
+        }
+      }
+    ],
+    "overall_verdict": "NOT_FOUND",
+    "notes": [
+      "Could not verify this reference in any scholarly database. It may be obscure, not yet indexed, or affected by a search/parser limitation. Manual review recommended."
+    ],
+    "enriched": {
+      "raw": "Open-R1 Community. Verifiable Coding Problems Python 10k. https://huggingface.co/datasets/open-r1/verifiable-coding-problems-python-10k, 2024.",
+      "title": "Verifiable Coding Problems Python 10k",
+      "authors": [
+        "Open-R1 Community"
+      ],
+      "year": 2024,
+      "venue": null,
+      "doi": "10.59350/kc3w6-jc060",
+      "arxiv_id": null,
+      "urls": [
+        "https://huggingface.co/datasets/open-r1/verifiable-coding-problems-python-10k"
+      ],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida, Carroll Wainwright, Pamela Mishkin, Chong Zhang, Sandhini Agarwal, Katarina Slama, and Alex Ray. Training language models to follow instructions with human feedback. Advances in neural information processing systems, 35: 27730–27744, 2022.",
+      "title": "Training language models to follow instructions with human feedback",
+      "authors": [
+        "Long Ouyang",
+        "Jeffrey Wu",
+        "Xu Jiang",
+        "Diogo Almeida",
+        "Carroll Wainwright",
+        "Pamela Mishkin",
+        "Chong Zhang",
+        "Sandhini Agarwal",
+        "Katarina Slama",
+        "Alex Ray"
+      ],
+      "year": 2022,
+      "venue": "Advances in neural information processing systems, 35: 27730–27744, 2022",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "Training Language Models to Follow Instructions with Human Feedback",
+              "year": 2022,
+              "authors": [
+                "Long Ouyang",
+                "Jeffrey Wu",
+                "Xu Jiang",
+                "Diogo Almeida",
+                "Carroll Wainwright",
+                "Pamela Mishkin",
+                "Chong Zhang",
+                "Sandhini Agarwal",
+                "Katarina Slama",
+                "Alex Ray"
+              ],
+              "doi": "10.52202/068431-2011",
+              "title_score": 1.0,
+              "author_score": 0.5,
+              "composite": 0.867,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Training language models to follow instructions with human feedback",
+              "year": 2022,
+              "authors": [
+                "Long Ouyang",
+                "Jeff Wu",
+                "Xu Jiang",
+                "Diogo Almeida",
+                "Carroll L. Wainwright",
+                "Pamela Mishkin",
+                "Chong Zhang",
+                "Sandhini Agarwal",
+                "Katarina Slama",
+                "Alex Ray"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 0.5,
+              "composite": 0.829,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Generative Relevance Feedback with Large Language Models",
+              "year": 2023,
+              "authors": [
+                "Iain Mackie",
+                "Shubham Chatterjee",
+                "Jeffrey Dalton"
+              ],
+              "doi": "10.1145/3539618.3591992",
+              "title_score": 0.618,
+              "author_score": 0.0,
+              "composite": 0.468,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Behavior Tree Generation using Large Language Models for Sequential Manipulation Planning with Human Instructions and Feedback",
+              "year": 2024,
+              "authors": [
+                "Jicong Ao",
+                "Yansong Wu",
+                "Sami Haddadin",
+                "Fan Wu"
+              ],
+              "doi": "10.36227/techrxiv.172668704.40528046/v1",
+              "title_score": 0.622,
+              "author_score": 0.0,
+              "composite": 0.367,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "UICoder: Finetuning Large Language Models to Generate User Interface Code through Automated Feedback",
+              "year": 2024,
+              "authors": [
+                "Jason Wu",
+                "Eldon Schoop",
+                "Alan Leung",
+                "Titus Barik",
+                "Jeffrey Bigham",
+                "Jeffrey Nichols"
+              ],
+              "doi": "10.18653/v1/2024.naacl-long.417",
+              "title_score": 0.491,
+              "author_score": 0.167,
+              "composite": 0.33,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Exploration Beyond Budget: Training Large Language Models to Explore Under Truncation Constraints",
+              "year": 2026,
+              "authors": [
+                "Yi Ouyang",
+                "Qianru Wang",
+                "Xian Wu"
+              ],
+              "doi": "10.1109/icassp55912.2026.11461683",
+              "title_score": 0.537,
+              "author_score": 0.0,
+              "composite": 0.32,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 0.5,
+          "year_score": 1.0,
+          "venue_score": 0.839,
+          "composite": 0.867,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "Training Language Models to Follow Instructions with Human Feedback",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2022,
+          "best_candidate_doi": "10.52202/068431-2011",
+          "best_candidate_venue": "Advances in Neural Information Processing Systems 35",
+          "best_candidate_authors": [
+            "Long Ouyang",
+            "Jeffrey Wu",
+            "Xu Jiang",
+            "Diogo Almeida",
+            "Carroll Wainwright",
+            "Pamela Mishkin",
+            "Chong Zhang",
+            "Sandhini Agarwal",
+            "Katarina Slama",
+            "Alex Ray",
+            "John Schulman",
+            "Jacob Hilton",
+            "Fraser Kelton",
+            "Luke Miller",
+            "Maddie Simens",
+            "Amanda Askell",
+            "Peter Welinder",
+            "Paul Christiano",
+            "Jan Leike",
+            "Ryan Lowe"
+          ],
+          "total_candidates": 6
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 49241.515792004066
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida, Carroll Wainwright, Pamela Mishkin, Chong Zhang, Sandhini Agarwal, Katarina Slama, and Alex Ray. Training language models to follow instructions with human feedback. Advances in neural information processing systems, 35: 27730–27744, 2022.",
+      "title": "Training language models to follow instructions with human feedback",
+      "authors": [
+        "Long Ouyang",
+        "Jeffrey Wu",
+        "Xu Jiang",
+        "Diogo Almeida",
+        "Carroll Wainwright",
+        "Pamela Mishkin",
+        "Chong Zhang",
+        "Sandhini Agarwal",
+        "Katarina Slama",
+        "Alex Ray"
+      ],
+      "year": 2022,
+      "venue": "Advances in neural information processing systems, 35: 27730–27744, 2022",
+      "doi": "10.52202/068431-2011",
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Art B Owen. Monte Carlo theory and practice. Unpublished, 2013.",
+      "title": "Monte Carlo theory and practice",
+      "authors": [
+        "Art B Owen"
+      ],
+      "year": 2013,
+      "venue": null,
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "FAIL",
+        "confidence": 0.7,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "Monte Carlo and Quasi-Monte Carlo for Statistics",
+              "year": 2009,
+              "authors": [
+                "Art B. Owen"
+              ],
+              "doi": "10.1007/978-3-642-04107-5_1",
+              "title_score": 0.532,
+              "author_score": 1.0,
+              "composite": 0.567,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Monte Carlo, Quasi-Monte Carlo, and Randomized Quasi-Monte Carlo",
+              "year": 2000,
+              "authors": [
+                "Art B. Owen"
+              ],
+              "doi": "10.1007/978-3-642-59657-5_5",
+              "title_score": 0.484,
+              "author_score": 1.0,
+              "composite": 0.541,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Comment: Unreasonable Effectiveness of Monte Carlo",
+              "year": 2019,
+              "authors": [
+                "Art B. Owen"
+              ],
+              "doi": "10.1214/18-sts676",
+              "title_score": 0.469,
+              "author_score": 1.0,
+              "composite": 0.533,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Error Estimation for Quasi-Monte Carlo",
+              "year": 2026,
+              "authors": [
+                "Art B. Owen"
+              ],
+              "doi": "10.1007/978-3-032-10590-5_4",
+              "title_score": 0.435,
+              "author_score": 1.0,
+              "composite": 0.514,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Multidimensional Variation for Quasi-Monte Carlo",
+              "year": 2005,
+              "authors": [
+                "Art B. Owen"
+              ],
+              "doi": "10.1142/9789812567765_0004",
+              "title_score": 0.43,
+              "author_score": 1.0,
+              "composite": 0.512,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 0,
+          "title_score": 0.532,
+          "author_score": 1.0,
+          "year_score": 0.0,
+          "venue_score": 0.5,
+          "composite": 0.567,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "Monte Carlo and Quasi-Monte Carlo for Statistics",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2009,
+          "best_candidate_doi": "10.1007/978-3-642-04107-5_1",
+          "best_candidate_venue": "Monte Carlo and Quasi-Monte Carlo Methods 2008",
+          "best_candidate_authors": [
+            "Art B. Owen"
+          ],
+          "total_candidates": 5
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 38555.97679101629
+        }
+      }
+    ],
+    "overall_verdict": "NOT_FOUND",
+    "notes": [
+      "Could not verify this reference in any scholarly database. It may be obscure, not yet indexed, or affected by a search/parser limitation. Manual review recommended."
+    ],
+    "enriched": null
+  },
+  {
+    "reference": {
+      "raw": "David Rein, Stas Gaskin, Lajanugen Logeswaran, Adva Wolf, Oded teht sun, Jackson H. He, Divyansh Kaushik, Chitta Baral, Yair Carmon, Vered Shwartz, Sang-Woo Lee, Yoav Goldberg, C. J. H. un, Swaroop Mishra, and Daniel Khashabi. Gpqa: A graduate-level google-proof q&a benchmark, 2023.",
+      "title": "Gpqa: A graduate-level google-proof q&a benchmark",
+      "authors": [
+        "David Rein",
+        "Stas Gaskin",
+        "Lajanugen Logeswaran",
+        "Adva Wolf",
+        "Oded teht sun",
+        "Jackson H. He",
+        "Divyansh Kaushik",
+        "Chitta Baral",
+        "Yair Carmon",
+        "Vered Shwartz",
+        "Sang-Woo Lee",
+        "Yoav Goldberg",
+        "C. J. H. un",
+        "Swaroop Mishra",
+        "Daniel Khashabi"
+      ],
+      "year": 2023,
+      "venue": null,
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "WARN",
+        "confidence": 0.85,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "arxiv",
+              "title": "GPQA: A Graduate-Level Google-Proof Q&A Benchmark",
+              "year": 2023,
+              "authors": [
+                "David Rein",
+                "Betty Li Hou",
+                "Asa Cooper Stickland",
+                "Jackson Petty",
+                "Richard Yuanzhe Pang",
+                "Julien Dirani",
+                "Julian Michael",
+                "Samuel R. Bowman"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 0.125,
+              "composite": 0.756,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Development of a Graduate-Level MIS Program: A Case Study",
+              "year": 1992,
+              "authors": [
+                "David A. Dibblee"
+              ],
+              "doi": "10.1080/08832323.1992.10117549",
+              "title_score": 0.472,
+              "author_score": 0.0,
+              "composite": 0.284,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "To Google or not to Google: Graduate students' use of the Internet to access personal information about clients.",
+              "year": 2011,
+              "authors": [
+                "David DiLillo",
+                "Emily B. Gale"
+              ],
+              "doi": "10.1037/a0024441",
+              "title_score": 0.348,
+              "author_score": 0.0,
+              "composite": 0.216,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Das Google Art Project – Fallstudie einer kreativen Partnerschaft zwischen Wirtschaft und Kultur",
+              "year": 2015,
+              "authors": [
+                "Simon Rein"
+              ],
+              "doi": "10.1007/978-3-662-47759-5_14",
+              "title_score": 0.317,
+              "author_score": 0.0,
+              "composite": 0.199,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Using the cover crop N calculator for adaptive nitrogen fertilizer management: a proof of concept",
+              "year": 2020,
+              "authors": [
+                "Julia W. Gaskin",
+                "Miguel L. Cabrera",
+                "David E. Kissel",
+                "Richard Hitchcock"
+              ],
+              "doi": "10.1017/s1742170519000152",
+              "title_score": 0.301,
+              "author_score": 0.0,
+              "composite": 0.191,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Integration of level shifting in a TSPC flip-flop for low-power robust timing closure in dual-Vdd ULV circuits",
+              "year": 2017,
+              "authors": [
+                "Francois Stas",
+                "David Bol"
+              ],
+              "doi": "10.1109/iscas.2017.8050571",
+              "title_score": 0.289,
+              "author_score": 0.0,
+              "composite": 0.184,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 0,
+          "title_score": 1.0,
+          "author_score": 0.125,
+          "year_score": 1.0,
+          "venue_score": 0.5,
+          "composite": 0.756,
+          "source": "arxiv",
+          "via": "search",
+          "best_candidate_title": "GPQA: A Graduate-Level Google-Proof Q&A Benchmark",
+          "best_candidate_source": "arxiv",
+          "best_candidate_year": 2023,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv",
+          "best_candidate_authors": [
+            "David Rein",
+            "Betty Li Hou",
+            "Asa Cooper Stickland",
+            "Jackson Petty",
+            "Richard Yuanzhe Pang",
+            "Julien Dirani",
+            "Julian Michael",
+            "Samuel R. Bowman"
+          ],
+          "total_candidates": 6,
+          "mismatches": [
+            "authors: author list differs after abbreviation normalization (overlap=0.12), cited=['David Rein', 'Stas Gaskin'], found=['David Rein', 'Betty Li Hou']"
+          ]
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 38987.27412498556
+        }
+      }
+    ],
+    "overall_verdict": "METADATA_MISMATCH",
+    "notes": [
+      "Metadata mismatches found: authors: author list differs after abbreviation normalization (overlap=0.12), cited=['David Rein', 'Stas Gaskin'], found=['David Rein', 'Betty Li Hou']"
+    ],
+    "enriched": {
+      "raw": "David Rein, Stas Gaskin, Lajanugen Logeswaran, Adva Wolf, Oded teht sun, Jackson H. He, Divyansh Kaushik, Chitta Baral, Yair Carmon, Vered Shwartz, Sang-Woo Lee, Yoav Goldberg, C. J. H. un, Swaroop Mishra, and Daniel Khashabi. Gpqa: A graduate-level google-proof q&a benchmark, 2023.",
+      "title": "Gpqa: A graduate-level google-proof q&a benchmark",
+      "authors": [
+        "David Rein",
+        "Stas Gaskin",
+        "Lajanugen Logeswaran",
+        "Adva Wolf",
+        "Oded teht sun",
+        "Jackson H. He",
+        "Divyansh Kaushik",
+        "Chitta Baral",
+        "Yair Carmon",
+        "Vered Shwartz",
+        "Sang-Woo Lee",
+        "Yoav Goldberg",
+        "C. J. H. un",
+        "Swaroop Mishra",
+        "Daniel Khashabi"
+      ],
+      "year": 2023,
+      "venue": "arXiv",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347, 2017.",
+      "title": "Proximal policy optimization algorithms",
+      "authors": [
+        "John Schulman",
+        "Filip Wolski",
+        "Prafulla Dhariwal",
+        "Alec Radford",
+        "Oleg Klimov"
+      ],
+      "year": 2017,
+      "venue": "arXiv preprint arXiv:1707.06347, 2017",
+      "doi": null,
+      "arxiv_id": "1707.06347",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "arxiv",
+              "title": "Proximal Policy Optimization Algorithms",
+              "year": 2017,
+              "authors": [
+                "John Schulman",
+                "Filip Wolski",
+                "Prafulla Dhariwal",
+                "Alec Radford",
+                "Oleg Klimov"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "Batch Size-Invariance for Policy Optimization",
+              "year": 2022,
+              "authors": [
+                "Jacob Hilton",
+                "Karl Cobbe",
+                "John Schulman"
+              ],
+              "doi": "10.52202/068431-1243",
+              "title_score": 0.643,
+              "author_score": 0.333,
+              "composite": 0.452,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Control point policy optimization using genetic algorithms",
+              "year": 2008,
+              "authors": [
+                "David John Stockton",
+                "Riham Khalil",
+                "Jason Ardon-Finch"
+              ],
+              "doi": "10.1080/00207540601070119",
+              "title_score": 0.66,
+              "author_score": 0.0,
+              "composite": 0.375,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Convex Optimization Algorithms for Sparse Signal Reconstruction",
+              "year": 2020,
+              "authors": [
+                "Filip Jovanovic",
+                "Dragana Miladinovic",
+                "Natasa Radunovic"
+              ],
+              "doi": "10.1109/meco49872.2020.9134243",
+              "title_score": 0.588,
+              "author_score": 0.0,
+              "composite": 0.334,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Reward Scale Robustness for Proximal Policy Optimization via DreamerV3 Tricks",
+              "year": 2023,
+              "authors": [
+                "Ryan Sullivan",
+                "Akarsh Kumar",
+                "Shengyi Huang",
+                "John Dickerson",
+                "Joseph Suarez"
+              ],
+              "doi": "10.52202/075280-0067",
+              "title_score": 0.552,
+              "author_score": 0.0,
+              "composite": 0.318,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Large-Scale Policy Making",
+              "year": 1982,
+              "authors": [
+                "John Abbott Worthley",
+                "Paul R. Schulman"
+              ],
+              "doi": "10.2307/257322",
+              "title_score": 0.469,
+              "author_score": 0.0,
+              "composite": 0.269,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 1,
+          "title_score": 1.0,
+          "author_score": 1.0,
+          "year_score": 1.0,
+          "venue_score": 0.238,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 1.0,
+          "source": "arxiv",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "Proximal Policy Optimization Algorithms",
+          "best_candidate_source": "arxiv",
+          "best_candidate_year": 2017,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv",
+          "best_candidate_authors": [
+            "John Schulman",
+            "Filip Wolski",
+            "Prafulla Dhariwal",
+            "Alec Radford",
+            "Oleg Klimov"
+          ],
+          "total_candidates": 7
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 37870.511333981995
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347, 2017.",
+      "title": "Proximal policy optimization algorithms",
+      "authors": [
+        "John Schulman",
+        "Filip Wolski",
+        "Prafulla Dhariwal",
+        "Alec Radford",
+        "Oleg Klimov"
+      ],
+      "year": 2017,
+      "venue": "arXiv preprint arXiv:1707.06347, 2017",
+      "doi": null,
+      "arxiv_id": "1707.06347",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Zhang, YK Li, and Yang Wu. Deepseekmath: Pushing the limits of mathematical reasoning in open language models. arXiv preprint arXiv:2402.03300, 2024.",
+      "title": "Deepseekmath: Pushing the limits of mathematical reasoning in open language models",
+      "authors": [
+        "Zhihong Shao",
+        "Peiyi Wang",
+        "Qihao Zhu",
+        "Runxin Xu",
+        "Junxiao Song",
+        "Xiao Bi",
+        "Haowei Zhang",
+        "Mingchuan Zhang",
+        "YK Li",
+        "Yang Wu"
+      ],
+      "year": 2024,
+      "venue": "arXiv preprint arXiv:2402.03300, 2024",
+      "doi": null,
+      "arxiv_id": "2402.03300",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "arxiv",
+              "title": "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models",
+              "year": 2024,
+              "authors": [
+                "Zhihong Shao",
+                "Peiyi Wang",
+                "Qihao Zhu",
+                "Runxin Xu",
+                "Junxiao Song",
+                "Xiao Bi",
+                "Haowei Zhang",
+                "Mingchuan Zhang",
+                "Y. K. Li",
+                "Y. Wu"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 0.9,
+              "composite": 0.98,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models",
+              "year": 2024,
+              "authors": [
+                "Zhihong Shao",
+                "Peiyi Wang",
+                "Qihao Zhu",
+                "R. Xu",
+                "Jun-Mei Song",
+                "Mingchuan Zhang",
+                "Y. K. Li",
+                "Yu Wu",
+                "Daya Guo"
+              ],
+              "doi": "10.48550/arXiv.2402.03300",
+              "title_score": 1.0,
+              "author_score": 0.7,
+              "composite": 0.94,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "Distilling Mathematical Reasoning Capabilities into Small Language Models",
+              "year": 2024,
+              "authors": [
+                "xunyu zhu",
+                "Jian Li",
+                "Yong Liu",
+                "Can Ma",
+                "Weiping Wang"
+              ],
+              "doi": "10.2139/ssrn.4782551",
+              "title_score": 0.594,
+              "author_score": 0.0,
+              "composite": 0.501,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Distilling mathematical reasoning capabilities into Small Language Models",
+              "year": 2024,
+              "authors": [
+                "Xunyu Zhu",
+                "Jian Li",
+                "Yong Liu",
+                "Can Ma",
+                "Weiping Wang"
+              ],
+              "doi": "10.1016/j.neunet.2024.106594",
+              "title_score": 0.594,
+              "author_score": 0.0,
+              "composite": 0.484,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "YuLan-Mini: Pushing the Limits of Open Data-efficient Language Model",
+              "year": 2025,
+              "authors": [
+                "Hu Yiwen",
+                "Huatong Song",
+                "Jie Chen",
+                "Jia Deng",
+                "Jiapeng Wang",
+                "Kun Zhou",
+                "Yutao Zhu",
+                "Jinhao Jiang",
+                "Zican Dong",
+                "Yang Lu"
+              ],
+              "doi": "10.18653/v1/2025.acl-long.268",
+              "title_score": 0.653,
+              "author_score": 0.0,
+              "composite": 0.474,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "A Survey on Large Language Models for Mathematical Reasoning",
+              "year": 2026,
+              "authors": [
+                "Peng-Yuan Wang",
+                "Tian-Shuo Liu",
+                "Chenyang Wang",
+                "Ziniu Li",
+                "Yidi Wang",
+                "Shu Yan",
+                "Chengxing Jia",
+                "Xu-Hui Liu",
+                "Xinwei Chen",
+                "Jiacheng Xu"
+              ],
+              "doi": "10.1145/3786333",
+              "title_score": 0.676,
+              "author_score": 0.071,
+              "composite": 0.4,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "MathSight: A Benchmark Exploring Have Vision-Language Models Really Seen in University-Level Mathematical Reasoning?",
+              "year": 2026,
+              "authors": [
+                "Yuandong Wang",
+                "Yao Cui",
+                "Yuxin Zhao",
+                "Zhen Yang",
+                "Yangfu Zhu",
+                "Zhenzhou Shao"
+              ],
+              "doi": "10.18653/v1/2026.acl-long.2198",
+              "title_score": 0.475,
+              "author_score": 0.167,
+              "composite": 0.314,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 0.9,
+          "year_score": 1.0,
+          "venue_score": 0.238,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 0.98,
+          "source": "arxiv",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models",
+          "best_candidate_source": "arxiv",
+          "best_candidate_year": 2024,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv",
+          "best_candidate_authors": [
+            "Zhihong Shao",
+            "Peiyi Wang",
+            "Qihao Zhu",
+            "Runxin Xu",
+            "Junxiao Song",
+            "Xiao Bi",
+            "Haowei Zhang",
+            "Mingchuan Zhang",
+            "Y. K. Li",
+            "Y. Wu",
+            "Daya Guo"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 31620.57620799169
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Zhang, YK Li, and Yang Wu. Deepseekmath: Pushing the limits of mathematical reasoning in open language models. arXiv preprint arXiv:2402.03300, 2024.",
+      "title": "Deepseekmath: Pushing the limits of mathematical reasoning in open language models",
+      "authors": [
+        "Zhihong Shao",
+        "Peiyi Wang",
+        "Qihao Zhu",
+        "Runxin Xu",
+        "Junxiao Song",
+        "Xiao Bi",
+        "Haowei Zhang",
+        "Mingchuan Zhang",
+        "YK Li",
+        "Yang Wu"
+      ],
+      "year": 2024,
+      "venue": "arXiv preprint arXiv:2402.03300, 2024",
+      "doi": null,
+      "arxiv_id": "2402.03300",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Yubo Wang, Xueguang Ma, Ge Zhang, Yuansheng Ni, Abhranil Chandra, Shiguang Guo, Weiming Ren, Aaran Arulraj, Xuan He, Ziyan Jiang, et al. Mmlu-pro: A more robust and challenging multitask language understanding benchmark. Advances in Neural Information Processing Systems, 37:95266–95290, 2024.",
+      "title": "Mmlu-pro: A more robust and challenging multitask language understanding benchmark",
+      "authors": [
+        "Yubo Wang",
+        "Xueguang Ma",
+        "Ge Zhang",
+        "Yuansheng Ni",
+        "Abhranil Chandra",
+        "Shiguang Guo",
+        "Weiming Ren",
+        "Aaran Arulraj",
+        "Xuan He",
+        "Ziyan Jiang"
+      ],
+      "year": 2024,
+      "venue": "Advances in Neural Information Processing Systems, 37:95266–95290, 2024",
+      "doi": null,
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 0.994,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 3,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark",
+              "year": 2024,
+              "authors": [
+                "Yubo Wang",
+                "Xueguang Ma",
+                "Ge Zhang",
+                "Yuansheng Ni",
+                "Abhranil Chandra",
+                "Shiguang Guo",
+                "Weiming Ren",
+                "Aaran Arulraj",
+                "Xuan He",
+                "Ziyan Jiang"
+              ],
+              "doi": "10.52202/079017-3018",
+              "title_score": 0.994,
+              "author_score": 0.625,
+              "composite": 0.895,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark",
+              "year": 2024,
+              "authors": [
+                "Yubo Wang",
+                "Xueguang Ma",
+                "Ge Zhang",
+                "Yuansheng Ni",
+                "Abhranil Chandra",
+                "Shiguang Guo",
+                "Weiming Ren",
+                "Aaran Arulraj",
+                "Xuan He",
+                "Ziyan Jiang"
+              ],
+              "doi": null,
+              "title_score": 0.994,
+              "author_score": 0.625,
+              "composite": 0.857,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "MMMU-Pro: A More Robust Multi-discipline Multimodal Understanding Benchmark",
+              "year": 2025,
+              "authors": [
+                "Xiang Yue",
+                "Tianyu Zheng",
+                "Yuansheng Ni",
+                "Yubo Wang",
+                "Kai Zhang",
+                "Shengbang Tong",
+                "Yuxuan Sun",
+                "Botao Yu",
+                "Ge Zhang",
+                "Huan Sun"
+              ],
+              "doi": "10.18653/v1/2025.acl-long.736",
+              "title_score": 0.688,
+              "author_score": 0.167,
+              "composite": 0.544,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "MMLU-SR: A Benchmark for Stress-Testing Reasoning Capability of Large Language Models",
+              "year": 2024,
+              "authors": [
+                "Wentian Wang",
+                "Sarthak Jain",
+                "Paul Kantor",
+                "Jacob Feldman",
+                "Lazaros Gallos",
+                "Hao Wang"
+              ],
+              "doi": "10.18653/v1/2024.genbench-1.5",
+              "title_score": 0.599,
+              "author_score": 0.0,
+              "composite": 0.499,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "MMLU-ProX: A Multilingual Benchmark for Advanced Large Language Model Evaluation",
+              "year": 2025,
+              "authors": [
+                "Weihao Xuan",
+                "Rui Yang",
+                "Heli Qi",
+                "Qingcheng Zeng",
+                "Yunze Xiao",
+                "Aosong Feng",
+                "Dairui Liu",
+                "Yun Xing",
+                "Junjue Wang",
+                "Fan Gao"
+              ],
+              "doi": "10.18653/v1/2025.emnlp-main.79",
+              "title_score": 0.642,
+              "author_score": 0.0,
+              "composite": 0.481,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "YuE: Scaling Open Foundation Models for Long-Form Music Generation",
+              "year": 2025,
+              "authors": [
+                "Ruibin Yuan",
+                "Hanfeng Lin",
+                "Shuyue Guo",
+                "Ge Zhang",
+                "Jiahao Pan",
+                "Yongyi Zang",
+                "Haohe Liu",
+                "Yiming Liang",
+                "Wenye Ma",
+                "Xingjian Du"
+              ],
+              "doi": null,
+              "title_score": 0.432,
+              "author_score": 0.4,
+              "composite": 0.447,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Video-MMLU: A Massive Multi-Discipline Lecture Understanding Benchmark",
+              "year": 2025,
+              "authors": [
+                "Enxin Song",
+                "Wenhao Chai",
+                "Weili Xu",
+                "Jianwen Xie",
+                "Yuxuan Liu",
+                "Gaoang Wang"
+              ],
+              "doi": "10.1109/iccvw69036.2025.00642",
+              "title_score": 0.526,
+              "author_score": 0.0,
+              "composite": 0.414,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "M3TQA: Massively Multilingual Multitask Table Question Answering",
+              "year": 2025,
+              "authors": [
+                "Daixin Shu",
+                "Jian Yang",
+                "Zhenhe Wu",
+                "Xianjie Wu",
+                "Xianfu Cheng",
+                "Xiangyuan Guan",
+                "Yanghai Wang",
+                "Pengfei Wu",
+                "Tingyang Yang",
+                "Hualei Zhu"
+              ],
+              "doi": null,
+              "title_score": 0.466,
+              "author_score": 0.111,
+              "composite": 0.393,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 0.994,
+          "author_score": 0.625,
+          "year_score": 1.0,
+          "venue_score": 0.846,
+          "composite": 0.895,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2024,
+          "best_candidate_doi": "10.52202/079017-3018",
+          "best_candidate_venue": "Advances in Neural Information Processing Systems 37",
+          "best_candidate_authors": [
+            "Yubo Wang",
+            "Xueguang Ma",
+            "Ge Zhang",
+            "Yuansheng Ni",
+            "Abhranil Chandra",
+            "Shiguang Guo",
+            "Weiming Ren",
+            "Aaran Arulraj",
+            "Xuan He",
+            "Ziyan Jiang",
+            "Tianle Li",
+            "Max Ku",
+            "Kai Wang",
+            "Alex Zhuang",
+            "Rongqi Fan",
+            "Xiang Yue",
+            "Wenhu Chen"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 7,
+          "elapsed_ms": 38413.38916600216
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Yubo Wang, Xueguang Ma, Ge Zhang, Yuansheng Ni, Abhranil Chandra, Shiguang Guo, Weiming Ren, Aaran Arulraj, Xuan He, Ziyan Jiang, et al. Mmlu-pro: A more robust and challenging multitask language understanding benchmark. Advances in Neural Information Processing Systems, 37:95266–95290, 2024.",
+      "title": "Mmlu-pro: A more robust and challenging multitask language understanding benchmark",
+      "authors": [
+        "Yubo Wang",
+        "Xueguang Ma",
+        "Ge Zhang",
+        "Yuansheng Ni",
+        "Abhranil Chandra",
+        "Shiguang Guo",
+        "Weiming Ren",
+        "Aaran Arulraj",
+        "Xuan He",
+        "Ziyan Jiang"
+      ],
+      "year": 2024,
+      "venue": "Advances in Neural Information Processing Systems, 37:95266–95290, 2024",
+      "doi": "10.52202/079017-3018",
+      "arxiv_id": null,
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, and Chenxu Lv. Qwen3 technical report. arXiv preprint arXiv:2505.09388, 2025.",
+      "title": "Qwen3 technical report",
+      "authors": [
+        "An Yang",
+        "Anfeng Li",
+        "Baosong Yang",
+        "Beichen Zhang",
+        "Binyuan Hui",
+        "Bo Zheng",
+        "Bowen Yu",
+        "Chang Gao",
+        "Chengen Huang",
+        "Chenxu Lv"
+      ],
+      "year": 2025,
+      "venue": "arXiv preprint arXiv:2505.09388, 2025",
+      "doi": null,
+      "arxiv_id": "2505.09388",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "arxiv",
+              "title": "Qwen3 Technical Report",
+              "year": 2025,
+              "authors": [
+                "An Yang",
+                "Anfeng Li",
+                "Baosong Yang",
+                "Beichen Zhang",
+                "Binyuan Hui",
+                "Bo Zheng",
+                "Bowen Yu",
+                "Chang Gao",
+                "Chengen Huang",
+                "Chenxu Lv"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Qwen3 Technical Report",
+              "year": 2025,
+              "authors": [
+                "An Yang",
+                "Anfeng Li",
+                "Baosong Yang",
+                "Beichen Zhang",
+                "Binyuan Hui",
+                "Bo Zheng",
+                "Bowen Yu",
+                "Chang Gao",
+                "Chengen Huang",
+                "Chenxu Lv"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Qwen3-VL Technical Report",
+              "year": 2025,
+              "authors": [
+                "Shuai Bai",
+                "Yuxuan Cai",
+                "Rui-Zhe Chen",
+                "Ke-qin Chen",
+                "Xiong-Hui Chen",
+                "Zesen Cheng",
+                "Lianghao Deng",
+                "Wei Ding",
+                "Rongyao Fang",
+                "Chang Gao"
+              ],
+              "doi": "10.48550/arXiv.2511.21631",
+              "title_score": 0.936,
+              "author_score": 0.556,
+              "composite": 0.819,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Qwen3-Omni Technical Report",
+              "year": 2025,
+              "authors": [
+                "Jin Xu",
+                "Zhifang Guo",
+                "Hangrui Hu",
+                "Yunfei Chu",
+                "Xiong Wang",
+                "Jinzheng He",
+                "Yuxuan Wang",
+                "Xianzhong Shi",
+                "Ting He",
+                "Xinfa Zhu"
+              ],
+              "doi": "10.48550/arXiv.2509.17765",
+              "title_score": 0.898,
+              "author_score": 0.333,
+              "composite": 0.742,
+              "via": "search"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Skywork Open Reasoner 1 Technical Report",
+              "year": 2025,
+              "authors": [
+                "Jujie He",
+                "Jiacai Liu",
+                "Chris Liu",
+                "Rui Yan",
+                "Chaojie Wang",
+                "Peng Cheng",
+                "Xiaoyu Zhang",
+                "Fuxiang Zhang",
+                "Jiacheng Xu",
+                "Wei Shen"
+              ],
+              "doi": "10.48550/arXiv.2505.22312",
+              "title_score": 0.613,
+              "author_score": 0.05,
+              "composite": 0.515,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "FINAL TECHNICAL REPORT",
+              "year": 2010,
+              "authors": [
+                "STEFAN VASILE",
+                "ZHENG LI"
+              ],
+              "doi": "10.2172/981931",
+              "title_score": 0.818,
+              "author_score": 0.0,
+              "composite": 0.475,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "An empirical study of Qwen3 quantization",
+              "year": 2026,
+              "authors": [
+                "Xingyu Zheng",
+                "Yuye Li",
+                "Haoran Chu",
+                "Yue Feng",
+                "Xudong Ma",
+                "Zining Wang",
+                "Jie Luo",
+                "Jinyang Guo",
+                "Haotong Qin",
+                "Michele Magno"
+              ],
+              "doi": "10.1007/s44267-026-00114-4",
+              "title_score": 0.29,
+              "author_score": 0.0,
+              "composite": 0.272,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Multimodal Ancient Document Parsing: Technical Report for EvaHan2026 Competition",
+              "year": 2026,
+              "authors": [
+                "Liqi He",
+                "Qiwei Li",
+                "Ziye Yang",
+                "Zuchao Li"
+              ],
+              "doi": "10.63317/2cfum2ozgjrs",
+              "title_score": 0.373,
+              "author_score": -0.333,
+              "composite": 0.239,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Reconstructing Qwen3 into Qwen3-Protein: A Versatile Biophysics-Grounded Protein Language Foundation Model for PTMs and Downstream Tasks",
+              "year": 2027,
+              "authors": [
+                "Yiyu Lin",
+                "Sen Yang",
+                "Jiahui Wu",
+                "Huaiyang Sun",
+                "Hao Wu",
+                "Lun Zhu",
+                "Yan Wang"
+              ],
+              "doi": "10.1007/978-981-92-3716-6_20",
+              "title_score": 0.215,
+              "author_score": -0.167,
+              "composite": 0.088,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Adapting FlexLLMGen to Qwen3 Dense and Mixture-of-Experts Models",
+              "year": 2026,
+              "authors": [
+                "Wenjian Yang"
+              ],
+              "doi": "10.1109/eitce70137.2026.11634352",
+              "title_score": 0.256,
+              "author_score": -1.0,
+              "composite": 0.008,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 1.0,
+          "year_score": 1.0,
+          "venue_score": 0.238,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 1.0,
+          "source": "arxiv",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "Qwen3 Technical Report",
+          "best_candidate_source": "arxiv",
+          "best_candidate_year": 2025,
+          "best_candidate_doi": null,
+          "best_candidate_venue": "arXiv",
+          "best_candidate_authors": [
+            "An Yang",
+            "Anfeng Li",
+            "Baosong Yang",
+            "Beichen Zhang",
+            "Binyuan Hui",
+            "Bo Zheng",
+            "Bowen Yu",
+            "Chang Gao",
+            "Chengen Huang",
+            "Chenxu Lv",
+            "Chujie Zheng",
+            "Dayiheng Liu",
+            "Fan Zhou",
+            "Fei Huang",
+            "Feng Hu",
+            "Hao Ge",
+            "Haoran Wei",
+            "Huan Lin",
+            "Jialong Tang",
+            "Jian Yang",
+            "Jianhong Tu",
+            "Jianwei Zhang",
+            "Jianxin Yang",
+            "Jiaxi Yang",
+            "Jing Zhou",
+            "Jingren Zhou",
+            "Junyang Lin",
+            "Kai Dang",
+            "Keqin Bao",
+            "Kexin Yang",
+            "Le Yu",
+            "Lianghao Deng",
+            "Mei Li",
+            "Mingfeng Xue",
+            "Mingze Li",
+            "Pei Zhang",
+            "Peng Wang",
+            "Qin Zhu",
+            "Rui Men",
+            "Ruize Gao",
+            "Shixuan Liu",
+            "Shuang Luo",
+            "Tianhao Li",
+            "Tianyi Tang",
+            "Wenbiao Yin",
+            "Xingzhang Ren",
+            "Xinyu Wang",
+            "Xinyu Zhang",
+            "Xuancheng Ren",
+            "Yang Fan",
+            "Yang Su",
+            "Yichang Zhang",
+            "Yinger Zhang",
+            "Yu Wan",
+            "Yuqiong Liu",
+            "Zekun Wang",
+            "Zeyu Cui",
+            "Zhenru Zhang",
+            "Zhipeng Zhou",
+            "Zihan Qiu"
+          ],
+          "total_candidates": 12
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 38784.193458996015
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, and Chenxu Lv. Qwen3 technical report. arXiv preprint arXiv:2505.09388, 2025.",
+      "title": "Qwen3 technical report",
+      "authors": [
+        "An Yang",
+        "Anfeng Li",
+        "Baosong Yang",
+        "Beichen Zhang",
+        "Binyuan Hui",
+        "Bo Zheng",
+        "Bowen Yu",
+        "Chang Gao",
+        "Chengen Huang",
+        "Chenxu Lv"
+      ],
+      "year": 2025,
+      "venue": "arXiv preprint arXiv:2505.09388, 2025",
+      "doi": null,
+      "arxiv_id": "2505.09388",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Qiying Yu, Zheng Zhang, Ruofei Zhu, Yufeng Yuan, Xiaochen Zuo, Yu Yue, Weinan Dai, Tiantian Fan, Gaohong Liu, and Lingjun Liu. Dapo: An open-source llm reinforcement learning system at scale. arXiv preprint arXiv:2503.14476, 2025.",
+      "title": "Dapo: An open-source llm reinforcement learning system at scale",
+      "authors": [
+        "Qiying Yu",
+        "Zheng Zhang",
+        "Ruofei Zhu",
+        "Yufeng Yuan",
+        "Xiaochen Zuo",
+        "Yu Yue",
+        "Weinan Dai",
+        "Tiantian Fan",
+        "Gaohong Liu",
+        "Lingjun Liu"
+      ],
+      "year": 2025,
+      "venue": "arXiv preprint arXiv:2503.14476, 2025",
+      "doi": null,
+      "arxiv_id": "2503.14476",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 0.85,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "semantic_scholar",
+              "title": "DAPO: An Open-Source LLM Reinforcement Learning System at Scale",
+              "year": 2025,
+              "authors": [
+                "Qiying Yu",
+                "Zheng Zhang",
+                "Ruofei Zhu",
+                "Yufeng Yuan",
+                "Xiaochen Zuo",
+                "Yu Yue",
+                "Tiantian Fan",
+                "Gaohong Liu",
+                "Lingjun Liu",
+                "Xin Liu"
+              ],
+              "doi": "10.48550/arXiv.2503.14476",
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "arxiv",
+              "title": "DAPO: An Open-Source LLM Reinforcement Learning System at Scale",
+              "year": 2025,
+              "authors": [
+                "Qiying Yu",
+                "Zheng Zhang",
+                "Ruofei Zhu",
+                "Yufeng Yuan",
+                "Xiaochen Zuo",
+                "Yu Yue",
+                "Weinan Dai",
+                "Tiantian Fan",
+                "Gaohong Liu",
+                "Lingjun Liu"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 1.0,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "DAPO: An Open-Source LLM Reinforcement Learning System at Scale",
+              "year": 2025,
+              "authors": [
+                "Qiying Yu",
+                "Zheng Zhang",
+                "Ruofei Zhu",
+                "Yufeng Yuan",
+                "Xiaochen Zuo",
+                "Yu Yue",
+                "Weinan Dai",
+                "Tiantian Fan",
+                "Gaohong Liu",
+                "juncai liu"
+              ],
+              "doi": "10.52202/085713-3775",
+              "title_score": 1.0,
+              "author_score": 1.0,
+              "composite": 0.965,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Integrating Reinforcement Learning and LLM with Self-Optimization Network System",
+              "year": 2025,
+              "authors": [
+                "Xing Xu",
+                "Jianbin Zhao",
+                "Yu Zhang",
+                "Rongpeng Li"
+              ],
+              "doi": "10.3390/network5030039",
+              "title_score": 0.643,
+              "author_score": 0.0,
+              "composite": 0.508,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "LLM-guided decision-making toolkit for multi-agent reinforcement learning",
+              "year": 2025,
+              "authors": [
+                "Zhemin Li",
+                "Ruobing Zhang",
+                "Zhengming Wang",
+                "Zheng Xie",
+                "Yiping Song"
+              ],
+              "doi": "10.1016/j.neucom.2025.130105",
+              "title_score": 0.544,
+              "author_score": 0.0,
+              "composite": 0.457,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "KL-Prior Regularized PPO: Integrating LLM Tactical Knowledge into Reinforcement Learning for Beyond-Visual-Range Air Combat",
+              "year": 2026,
+              "authors": [
+                "Zheng Guo",
+                "Jianglong Yu",
+                "Yiming Chen",
+                "Zhang Ren"
+              ],
+              "doi": "10.1109/icca69928.2026.11618137",
+              "title_score": 0.495,
+              "author_score": 0.0,
+              "composite": 0.391,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "OmniSim: A LLM-Powered Open-Source Simulator for Generating Personalized and Adaptive Conversational Recommendation Dialogues",
+              "year": 2026,
+              "authors": [
+                "Yong Zheng",
+                "Jian Zhang"
+              ],
+              "doi": "10.1145/3774935.3812730",
+              "title_score": 0.479,
+              "author_score": 0.0,
+              "composite": 0.381,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 3,
+          "title_score": 1.0,
+          "author_score": 1.0,
+          "year_score": 1.0,
+          "venue_score": 0.297,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 1.0,
+          "source": "semantic_scholar",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "DAPO: An Open-Source LLM Reinforcement Learning System at Scale",
+          "best_candidate_source": "semantic_scholar",
+          "best_candidate_year": 2025,
+          "best_candidate_doi": "10.48550/arXiv.2503.14476",
+          "best_candidate_venue": "Neural Information Processing Systems",
+          "best_candidate_authors": [
+            "Qiying Yu",
+            "Zheng Zhang",
+            "Ruofei Zhu",
+            "Yufeng Yuan",
+            "Xiaochen Zuo",
+            "Yu Yue",
+            "Tiantian Fan",
+            "Gaohong Liu",
+            "Lingjun Liu",
+            "Xin Liu",
+            "Haibin Lin",
+            "Zhiqi Lin",
+            "Bole Ma",
+            "Guangming Sheng",
+            "Yuxuan Tong",
+            "Chi Zhang",
+            "Mofan Zhang",
+            "Wang Zhang",
+            "Hang Zhu",
+            "Jinhua Zhu",
+            "Jiaze Chen",
+            "Jiangjie Chen",
+            "Chengyi Wang",
+            "Honglin Yu",
+            "Weinan Dai",
+            "Yuxuan Song",
+            "Xiang Wei",
+            "Haodong Zhou",
+            "Jingjing Liu",
+            "Wei Ma",
+            "Ya-Qin Zhang",
+            "Lin Yan",
+            "Mu Qiao",
+            "Yong-Xu Wu",
+            "Mingxuan Wang"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 24599.67433300335
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Qiying Yu, Zheng Zhang, Ruofei Zhu, Yufeng Yuan, Xiaochen Zuo, Yu Yue, Weinan Dai, Tiantian Fan, Gaohong Liu, and Lingjun Liu. Dapo: An open-source llm reinforcement learning system at scale. arXiv preprint arXiv:2503.14476, 2025.",
+      "title": "Dapo: An open-source llm reinforcement learning system at scale",
+      "authors": [
+        "Qiying Yu",
+        "Zheng Zhang",
+        "Ruofei Zhu",
+        "Yufeng Yuan",
+        "Xiaochen Zuo",
+        "Yu Yue",
+        "Weinan Dai",
+        "Tiantian Fan",
+        "Gaohong Liu",
+        "Lingjun Liu"
+      ],
+      "year": 2025,
+      "venue": "arXiv preprint arXiv:2503.14476, 2025",
+      "doi": "10.48550/arXiv.2503.14476",
+      "arxiv_id": "2503.14476",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  },
+  {
+    "reference": {
+      "raw": "Winston Yu, Albert Jiang, Jiahe Zhang, Zhihong Xu, Shen Wang, Yiming Xu, He He, Quanquan Gu, and Weikun Shi. NuminaMath: A new frontier for LLM mathematical reasoning. arXiv preprint arXiv:2406.00762, 2024.",
+      "title": "Numina Math: A new frontier for LLM mathematical reasoning",
+      "authors": [
+        "Winston Yu",
+        "Albert Jiang",
+        "Jiahe Zhang",
+        "Zhihong Xu",
+        "Shen Wang",
+        "Yiming Xu",
+        "He He",
+        "Quanquan Gu",
+        "Weikun Shi"
+      ],
+      "year": 2024,
+      "venue": "arXiv preprint arXiv:2406.00762, 2024",
+      "doi": null,
+      "arxiv_id": "2406.00762",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "FAIL",
+        "confidence": 0.7,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "crossref",
+              "title": "An Analysis of Mathematical Reasoning",
+              "year": 2024,
+              "authors": [
+                "Bertrand Russell",
+                "Nicholas Griffin",
+                "Albert C. Lewis"
+              ],
+              "doi": "10.4324/9781003557319-20",
+              "title_score": 0.589,
+              "author_score": 0.0,
+              "composite": 0.486,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Enhancing Formalization for LLM’s Mathematical Reasoning",
+              "year": 2025,
+              "authors": [
+                "Wanchen Jiang"
+              ],
+              "doi": "10.61173/cp7xmq61",
+              "title_score": 0.649,
+              "author_score": 0.0,
+              "composite": 0.475,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "HumanoidGen: Data Generation for Bimanual Dexterous Manipulation via LLM Reasoning",
+              "year": 2025,
+              "authors": [
+                "Zhi Jing",
+                "Siyuan Yang",
+                "Jicong Ao",
+                "Ting Xiao",
+                "Yu-Gang Jiang",
+                "Chenjia Bai"
+              ],
+              "doi": "10.52202/085713-5220",
+              "title_score": 0.457,
+              "author_score": 0.0,
+              "composite": 0.371,
+              "via": "search"
+            },
+            {
+              "source": "arxiv",
+              "title": "Mechanisms of unstable blowup in a quadratic nonlinear Schrödinger equation",
+              "year": 2024,
+              "authors": [
+                "Jonathan Jaquette"
+              ],
+              "doi": null,
+              "title_score": 0.376,
+              "author_score": 0.0,
+              "composite": 0.369,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "semantic_scholar",
+              "title": "Mechanisms of Unstable Blowup in a Quadratic Nonlinear Schrödinger Equation",
+              "year": 2024,
+              "authors": [
+                "Jonathan Jaquette"
+              ],
+              "doi": "10.1007/s00332-025-10212-0",
+              "title_score": 0.376,
+              "author_score": 0.0,
+              "composite": 0.368,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "Agentic Taxation Optimization via LLM SMT-Constraint Reasoning",
+              "year": 2026,
+              "authors": [
+                "Ting-Chien Hwang",
+                "Fang Yu",
+                "Jie-Hong Roland Jiang"
+              ],
+              "doi": "10.1145/3786583.3786917",
+              "title_score": 0.433,
+              "author_score": 0.333,
+              "composite": 0.333,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Verifiable Reasoning for LLM-based Generative Recommendation",
+              "year": 2026,
+              "authors": [
+                "Xinyu Lin",
+                "Hanqing Zeng",
+                "Hanchao Yu",
+                "Yinglong Xia",
+                "Jiang Zhang",
+                "Aashu Singh",
+                "Fei Liu",
+                "Wenjie Wang",
+                "Fuli Feng",
+                "Tat-Seng Chua"
+              ],
+              "doi": "10.1145/3805712.3809622",
+              "title_score": 0.441,
+              "author_score": 0.067,
+              "composite": 0.27,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 0,
+          "title_score": 0.589,
+          "author_score": 0.0,
+          "year_score": 1.0,
+          "venue_score": 0.23,
+          "composite": 0.486,
+          "source": "crossref",
+          "via": "search",
+          "best_candidate_title": "An Analysis of Mathematical Reasoning",
+          "best_candidate_source": "crossref",
+          "best_candidate_year": 2024,
+          "best_candidate_doi": "10.4324/9781003557319-20",
+          "best_candidate_venue": "The Collected Papers of Bertrand Russell, Volume 2",
+          "best_candidate_authors": [
+            "Bertrand Russell",
+            "Nicholas Griffin",
+            "Albert C. Lewis"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 31245.09729098645
+        }
+      }
+    ],
+    "overall_verdict": "NOT_FOUND",
+    "notes": [
+      "Could not verify this reference in any scholarly database. It may be obscure, not yet indexed, or affected by a search/parser limitation. Manual review recommended."
+    ],
+    "enriched": null
+  },
+  {
+    "reference": {
+      "raw": "Chujie Zheng, Shixuan Liu, Mingze Li, Xiong-Hui Chen, Bowen Yu, Chang Gao, Kai Dang, Yuqiong Liu, Rui Men, and An Yang. Group sequence policy optimization. arXiv preprint arXiv:2507.18071, 2025.",
+      "title": "Group sequence policy optimization",
+      "authors": [
+        "Chujie Zheng",
+        "Shixuan Liu",
+        "Mingze Li",
+        "Xiong-Hui Chen",
+        "Bowen Yu",
+        "Chang Gao",
+        "Kai Dang",
+        "Yuqiong Liu",
+        "Rui Men",
+        "An Yang"
+      ],
+      "year": 2025,
+      "venue": "arXiv preprint arXiv:2507.18071, 2025",
+      "doi": null,
+      "arxiv_id": "2507.18071",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    },
+    "checks": [
+      {
+        "name": "existence",
+        "status": "PASS",
+        "confidence": 1.0,
+        "evidence": {
+          "queried_sources": [
+            "crossref",
+            "openalex",
+            "semantic_scholar",
+            "arxiv",
+            "zenodo",
+            "web",
+            "dblp"
+          ],
+          "source_results": [
+            {
+              "source": "crossref",
+              "status": "matched",
+              "candidate_count": 5,
+              "error": null
+            },
+            {
+              "source": "openalex",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "semantic_scholar",
+              "status": "matched",
+              "candidate_count": 1,
+              "error": null
+            },
+            {
+              "source": "arxiv",
+              "status": "matched",
+              "candidate_count": 2,
+              "error": null
+            },
+            {
+              "source": "zenodo",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "web",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            },
+            {
+              "source": "dblp",
+              "status": "no_match",
+              "candidate_count": 0,
+              "error": null
+            }
+          ],
+          "candidate_sources": [
+            {
+              "source": "semantic_scholar",
+              "title": "Group Sequence Policy Optimization",
+              "year": 2025,
+              "authors": [
+                "Chujie Zheng",
+                "Shixuan Liu",
+                "Mingze Li",
+                "Xiong-Hui Chen",
+                "Bowen Yu",
+                "Chang Gao",
+                "K. Dang",
+                "Yuqiong Liu",
+                "Rui Men",
+                "An Yang"
+              ],
+              "doi": "10.48550/arXiv.2507.18071",
+              "title_score": 1.0,
+              "author_score": 0.818,
+              "composite": 0.964,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "arxiv",
+              "title": "Group Sequence Policy Optimization",
+              "year": 2025,
+              "authors": [
+                "Chujie Zheng",
+                "Shixuan Liu",
+                "Mingze Li",
+                "Xiong-Hui Chen",
+                "Bowen Yu",
+                "Chang Gao",
+                "Kai Dang",
+                "Yuqiong Liu",
+                "Rui Men",
+                "An Yang"
+              ],
+              "doi": null,
+              "title_score": 1.0,
+              "author_score": 0.818,
+              "composite": 0.964,
+              "via": "arxiv_lookup"
+            },
+            {
+              "source": "crossref",
+              "title": "Group-in-Group Policy Optimization for LLM Agent Training",
+              "year": 2025,
+              "authors": [
+                "Lang Feng",
+                "Zhenghai Xue",
+                "Tingcong Liu",
+                "Bo An"
+              ],
+              "doi": "10.52202/085713-1544",
+              "title_score": 0.593,
+              "author_score": -0.25,
+              "composite": 0.428,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Graph-Attention-Based Casual Discovery With Trust Region-Navigated Clipping Policy Optimization",
+              "year": 2023,
+              "authors": [
+                "Shixuan Liu",
+                "Yanghe Feng",
+                "Keyu Wu",
+                "Guangquan Cheng",
+                "Jincai Huang",
+                "Zhong Liu"
+              ],
+              "doi": "10.1109/tcyb.2021.3116762",
+              "title_score": 0.419,
+              "author_score": 0.2,
+              "composite": 0.292,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Click: Controllable Text Generation with Sequence Likelihood Contrastive Learning",
+              "year": 2023,
+              "authors": [
+                "Chujie Zheng",
+                "Pei Ke",
+                "Zheng Zhang",
+                "Minlie Huang"
+              ],
+              "doi": "10.18653/v1/2023.findings-acl.65",
+              "title_score": 0.365,
+              "author_score": 0.25,
+              "composite": 0.277,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Group path planning method based on improved group search optimization algorithm",
+              "year": 2013,
+              "authors": [
+                "Hui-jie ZHENG",
+                "Hong LIU",
+                "Xiang-wei ZHENG"
+              ],
+              "doi": "10.3724/sp.j.1087.2012.02223",
+              "title_score": 0.456,
+              "author_score": -0.5,
+              "composite": 0.139,
+              "via": "search"
+            },
+            {
+              "source": "crossref",
+              "title": "Understanding the Chinese stock market: international comparison and policy implications",
+              "year": 2017,
+              "authors": [
+                "Zhenya Liu",
+                "Shixuan Wang"
+              ],
+              "doi": "10.1080/20954816.2017.1384616",
+              "title_score": 0.41,
+              "author_score": -0.5,
+              "composite": 0.111,
+              "via": "search"
+            }
+          ],
+          "independent_source_count": 2,
+          "title_score": 1.0,
+          "author_score": 0.818,
+          "year_score": 1.0,
+          "venue_score": 0.304,
+          "exact_arxiv_match": true,
+          "exact_doi_match": false,
+          "composite": 0.964,
+          "source": "semantic_scholar",
+          "via": "arxiv_lookup",
+          "best_candidate_title": "Group Sequence Policy Optimization",
+          "best_candidate_source": "semantic_scholar",
+          "best_candidate_year": 2025,
+          "best_candidate_doi": "10.48550/arXiv.2507.18071",
+          "best_candidate_venue": "arXiv.org",
+          "best_candidate_authors": [
+            "Chujie Zheng",
+            "Shixuan Liu",
+            "Mingze Li",
+            "Xiong-Hui Chen",
+            "Bowen Yu",
+            "Chang Gao",
+            "K. Dang",
+            "Yuqiong Liu",
+            "Rui Men",
+            "An Yang",
+            "Jingren Zhou",
+            "Junyang Lin"
+          ],
+          "total_candidates": 8
+        },
+        "cost": {
+          "tokens_used": 0,
+          "api_calls": 9,
+          "elapsed_ms": 36433.60016698716
+        }
+      }
+    ],
+    "overall_verdict": "VERIFIED",
+    "notes": [],
+    "enriched": {
+      "raw": "Chujie Zheng, Shixuan Liu, Mingze Li, Xiong-Hui Chen, Bowen Yu, Chang Gao, Kai Dang, Yuqiong Liu, Rui Men, and An Yang. Group sequence policy optimization. arXiv preprint arXiv:2507.18071, 2025.",
+      "title": "Group sequence policy optimization",
+      "authors": [
+        "Chujie Zheng",
+        "Shixuan Liu",
+        "Mingze Li",
+        "Xiong-Hui Chen",
+        "Bowen Yu",
+        "Chang Gao",
+        "Kai Dang",
+        "Yuqiong Liu",
+        "Rui Men",
+        "An Yang"
+      ],
+      "year": 2025,
+      "venue": "arXiv preprint arXiv:2507.18071, 2025",
+      "doi": "10.48550/arXiv.2507.18071",
+      "arxiv_id": "2507.18071",
+      "urls": [],
+      "pmid": null,
+      "citation_only": false
+    }
+  }
+]

@@ -430,19 +430,11 @@ def _augment_with_intext_refs(refs: list[Reference], text: str) -> list[Referenc
     only the entries it sees; neither case should silently discard citations
     that are visible in the article body.
     """
-    from paperaudit.parse.intext import extract_intext_citations
+    from paperaudit.parse.intext import canonical_author_key, extract_intext_citations
 
     marker = re.search(r"(?im)^\s*(?:References|Bibliography)\s*$", text)
     body = text[:marker.start()] if marker else text
     inline = extract_intext_citations(body)
-    def author_key(value: str) -> str:
-        # ``et al`` may lose its trailing period during PDF extraction.  Strip
-        # both spellings before taking the surname token.
-        value = re.split(r"\s+(?:et\s+al\.?|and|&)\s*", value, maxsplit=1,
-                         flags=re.IGNORECASE)[0]
-        value = value.split(",", 1)[0].strip()
-        return value.split()[-1].casefold() if value.split() else ""
-
     existing_keys: set[tuple[str, int]] = set()
     for ref in refs:
         if not ref.year or not ref.authors:
@@ -452,12 +444,12 @@ def _augment_with_intext_refs(refs: list[Reference], text: str) -> list[Referenc
         # author surname so a correctly extracted full record is not reported
         # again as a false "缺少文末条目" entry.
         for author in ref.authors:
-            key = author_key(author)
+            key = canonical_author_key(author)
             if key:
                 existing_keys.add((key, ref.year))
     refs.extend(
         r for r in inline
-        if (author_key(r.authors[0]), r.year) not in existing_keys
+        if (canonical_author_key(r.authors[0]), r.year) not in existing_keys
     )
     return refs
 

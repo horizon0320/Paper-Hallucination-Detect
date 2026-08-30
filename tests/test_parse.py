@@ -11,7 +11,7 @@ from paperaudit.parse.csl_json import parse_csl_json
 from paperaudit.parse.nbib import parse_nbib
 from paperaudit.parse.doi_list import parse_doi_list
 from paperaudit.parse.plaintext import split, detect_style, extract_fields, Style, parse_plaintext
-from paperaudit.parse.intext import extract_intext_citations
+from paperaudit.parse.intext import canonical_author_key, extract_intext_citations
 from paperaudit.parse.detect import auto_parse
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -104,6 +104,13 @@ class TestDoiList:
 
 
 class TestPlaintext:
+    def test_canonical_author_key_handles_pdf_glued_citations(self):
+        assert canonical_author_key("KCobbe et al.") == "cobbe"
+        assert canonical_author_key("GPQA DiamondRein et al.") == "rein"
+        assert canonical_author_key("MultiPL-ECassano et al.") == "cassano"
+        assert canonical_author_key("MMLU- ReduxGema et al.") == "gema"
+        assert canonical_author_key("BYang et al.") == "yang"
+
     def test_split_numbered_ieee(self):
         text = (FIXTURES / "ieee_style.txt").read_text()
         chunks = split(text)
@@ -186,6 +193,14 @@ Carol Brown. Second example paper. In Proceedings of Testing, 2021.
         ref = extract_fields(raw, Style.AUTHOR_YEAR)
         assert len(ref.authors) == 12
 
+    def test_author_year_drops_et_al_from_author_list(self):
+        ref = extract_fields(
+            "Federico Cassano, John Gouwar, Daniel Nguyen, Sydney Nguyen, et al. "
+            "MultiPL-E: A scalable approach. arXiv preprint arXiv:2208.08227, 2022.",
+            Style.AUTHOR_YEAR,
+        )
+        assert all("et al" not in author.casefold() for author in ref.authors)
+
     def test_split_merges_author_only_line_with_wrapped_title(self):
         text = """\
 First Author, Second Author, and Third Author.
@@ -245,6 +260,52 @@ Next Author and Another Author. A second paper. In Conference, 2023.
         assert chunks[1].startswith("The White House.")
         assert "Artists Score Major Win" in chunks[0]
         assert "America’s AI Action Plan" in chunks[1]
+
+    def test_split_adjacent_dataset_records_and_arxiv_record(self):
+        text = (
+            "ModelScope Community. AI-ModelScope/CodeAlpaca-20k. "
+            "https://huggingface.co/datasets/AI-ModelScope/CodeAlpaca-20k, 2023. "
+            "Open-R1 Community. Verifiable Coding Problems Python 10k. "
+            "https://huggingface.co/datasets/open-r1/verifiable-coding-problems-python-10k, 2024."
+        )
+        chunks = split(text)
+        assert len(chunks) == 2
+        refs = parse_plaintext(text, Style.AUTHOR_YEAR)
+        assert [r.title for r in refs] == [
+            "AI-ModelScope/CodeAlpaca-20k",
+            "Verifiable Coding Problems Python 10k",
+        ]
+
+    def test_split_adjacent_full_author_records_without_url(self):
+        text = (
+            "Yubo Wang, Xueguang Ma, Ge Zhang, Yuansheng Ni, et al. "
+            "Mmlu-pro: A robust benchmark. Advances in Neural Information Processing Systems, 2024. "
+            "An Yang, Anfeng Li, Baosong Yang, and Chenxu Lv. Qwen3 technical report. "
+            "arXiv preprint arXiv:2505.09388, 2025."
+        )
+        chunks = split(text)
+        assert len(chunks) == 2
+        assert chunks[1].startswith("An Yang")
+
+    def test_author_year_repairs_ocr_initial_chain_before_title(self):
+        raw = (
+            "David Rein, Stas Gaskin, Lajanugen Logeswaran, Adva Wolf, "
+            "Yoav Goldberg, C. J. H. un, Swaroop Mishra, and Daniel Khashabi. "
+            "Gpqa: A graduate-level google-proof q&a benchmark, 2023."
+        )
+        ref = extract_fields(raw, Style.AUTHOR_YEAR)
+        assert ref.title == "Gpqa: A graduate-level google-proof q&a benchmark"
+        assert "C. J. H. un" in ref.authors
+
+    def test_author_year_stops_at_named_international_conference(self):
+        raw = (
+            "Amirhossein Kazemnejad, Milad Aghajohari, Eva Portelance, Alessandro Sordoni, "
+            "Siva Reddy, Aaron Courville, and Nicolas Le Roux. VINE-PPO: Unlocking RL potential "
+            "for LLM reasoning through refined credit assignment. In The Twelfth International "
+            "Conference on Learning Representations, ICLR 2024, 2024."
+        )
+        ref = extract_fields(raw, Style.AUTHOR_YEAR)
+        assert ref.title == "VINE-PPO: Unlocking RL potential for LLM reasoning through refined credit assignment"
 
     def test_extracts_sentence_style_web_organization_record(self):
         ref = extract_fields(

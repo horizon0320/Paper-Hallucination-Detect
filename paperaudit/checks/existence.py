@@ -163,12 +163,16 @@ def _year_score(ref_year: int | None, cand_year: int | None) -> float:
 def _score_candidate(ref: Reference, cand: Candidate) -> tuple[float, dict[str, Any]]:
     evidence: dict[str, Any] = {}
 
-    # Exact identifier match is definitive — no fuzzy comparison needed
-    if ref.arxiv_id and cand.arxiv_id and ref.arxiv_id == cand.arxiv_id:
-        evidence.update({"title_score": 1.0, "exact_arxiv_match": True, "composite": 1.0})
-        return 1.0, evidence
-    if ref.doi and cand.doi and ref.doi.lower().rstrip("/") == cand.doi.lower().rstrip("/"):
-        evidence.update({"title_score": 1.0, "exact_doi_match": True, "composite": 1.0})
+    # An identifier is strong evidence, but a malformed citation can pair a
+    # real ID with the wrong title (for example a stale/wrong arXiv number).
+    # Only treat it as definitive when the cited title is absent or agrees;
+    # otherwise fall through to normal title/author linkage so the mismatch is
+    # not silently verified as the identified work.
+    exact_arxiv = bool(ref.arxiv_id and cand.arxiv_id and ref.arxiv_id == cand.arxiv_id)
+    exact_doi = bool(ref.doi and cand.doi and ref.doi.lower().rstrip("/") == cand.doi.lower().rstrip("/"))
+    identifier_match = exact_arxiv or exact_doi
+    if identifier_match and (not ref.title or not cand.title):
+        evidence.update({"title_score": 1.0, "exact_arxiv_match": exact_arxiv, "exact_doi_match": exact_doi, "composite": 1.0})
         return 1.0, evidence
 
     title_score = 0.0
@@ -192,6 +196,14 @@ def _score_candidate(ref: Reference, cand: Candidate) -> tuple[float, dict[str, 
     if ref.venue and cand.venue:
         venue_score = fuzz.token_sort_ratio(ref.venue.lower(), cand.venue.lower()) / 100.0
     evidence["venue_score"] = round(venue_score, 3)
+
+    if identifier_match and title_score >= 0.85:
+        evidence.update({"exact_arxiv_match": exact_arxiv, "exact_doi_match": exact_doi})
+        # Keep identifier matches dominant, but let the best author-aligned
+        # record win when multiple sources expose the same identifier with
+        # different author normalization/completeness.
+        evidence["composite"] = round(0.80 + 0.20 * author_score, 3)
+        return evidence["composite"], evidence
 
     if title_score == 0.0:
         composite = 0.0

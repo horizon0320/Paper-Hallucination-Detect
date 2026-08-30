@@ -18,9 +18,29 @@ _AUTHOR_STOPWORDS = {
 }
 
 
+def canonical_author_key(author: str) -> str:
+    """Return a tolerant surname key for body/reference reconciliation.
+
+    PDF text extraction frequently glues a citation label to the surname
+    (``MultiPL-ECassano``, ``BYang``) or prefixes it with a benchmark name
+    (``GPQA DiamondRein``).  Prefer the final name-shaped token and remove
+    leading capitals from a glued token so these forms match the full record.
+    """
+    value = re.split(r"\s+(?:et\s+al\.?|and|&)\s*", author, maxsplit=1, flags=re.IGNORECASE)[0]
+    tokens = re.findall(r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*", value)
+    if not tokens:
+        return ""
+    token = tokens[-1]
+    # ``KCobbe``, ``DiamondRein`` and ``MMLU-ProWang`` all contain a final
+    # capitalized surname segment. Keep ordinary surnames unchanged.
+    match = re.search(r"([A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ'’\-]{2,})$", token)
+    if match:
+        token = match.group(1)
+    return token.casefold()
+
+
 def _author_key(author: str) -> str:
-    first = re.split(r"\s+(?:et\s+al\.|and|&)\s*", author, maxsplit=1, flags=re.IGNORECASE)[0]
-    return first.split()[0].casefold()
+    return canonical_author_key(author)
 
 
 def extract_intext_citations(text: str) -> list[Reference]:

@@ -4,10 +4,11 @@ import pytest
 import respx
 import httpx
 
-from paperaudit.models import Reference, Verdict, CheckStatus
+from paperaudit.models import Candidate, Reference, Verdict, CheckStatus
 from paperaudit.core.engine import _build_enriched, _build_domain_sources, verify_one, verify_many
 from paperaudit.core.cascade import VerifyOptions
 from paperaudit.sources.openalex import OpenAlexAdapter
+from paperaudit.checks.existence import _score_candidate
 
 _OPENALEX_WORK = {
     "id": "https://openalex.org/W2964232343",
@@ -27,6 +28,18 @@ _OPENALEX_WORK = {
 
 @pytest.mark.asyncio
 class TestEngine:
+    async def test_wrong_arxiv_id_does_not_override_conflicting_title(self):
+        ref = Reference(title="NuminaMath: A new frontier for LLM mathematical reasoning", arxiv_id="2406.00762")
+        cand = Candidate(
+            title="Mechanisms of unstable blowup in a quadratic nonlinear Schrödinger equation",
+            authors=["Jonathan Jaquette"],
+            arxiv_id="2406.00762",
+            source="arxiv",
+        )
+        score, evidence = _score_candidate(ref, cand)
+        assert score < 0.85
+        assert not evidence.get("exact_arxiv_match")
+
     async def test_auto_mode_always_includes_dblp_for_titled_reference(self):
         # Venue parsing can fail even for an unmistakable CS paper.  DBLP is
         # therefore a per-reference evidence pass, not a venue-classification
