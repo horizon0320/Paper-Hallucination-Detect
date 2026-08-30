@@ -1,210 +1,85 @@
 # Paper-audit
 
-[![PyPI](https://img.shields.io/pypi/v/paperaudit)](https://pypi.org/project/paperaudit/)
-[![Python](https://img.shields.io/pypi/pyversions/paperaudit)](https://pypi.org/project/paperaudit/)
-[![CI](https://github.com/horizon0320/Paper-audit/actions/workflows/publish.yml/badge.svg)](https://github.com/horizon0320/Paper-audit/actions/workflows/publish.yml)
+Paper-audit 用于检查论文参考文献是否能够在学术数据库中找到，并比较引用信息与数据库记录是否一致。
 
-Citation verification tool: check whether references actually exist, whether their URLs are live, and whether the content is relevant to the citation context.
+## 怎么用
 
-## What it does
+### 安装
 
-Three checks per reference:
-
-1. **Existence** — resolves against OpenAlex, Crossref, Semantic Scholar, arXiv, DBLP (CS), PubMed (biomedical), and Google Books (textbooks). Domain records are queried as part of the main evidence pass, then linked across preprint, conference, and journal versions. For computer-science citations, arXiv is queried by exact title first and, when that misses, by author plus discriminative title keywords so title changes between preprint and publication do not hide a real record.
-2. **URL liveness** — HTTP HEAD/GET check; classifies 2xx/4xx/timeout/bot-protection
-3. **Content relevance** — LLM-backed check comparing fetched content to the cited title/topic (requires `DEEPSEEK_API_KEY` or Ollama)
-
-## Verdicts
-
-| Verdict | Meaning | Action |
-|---|---|---|
-| `VERIFIED` | Paper found in a scholarly database with matching title, authors, year | None — citation is good |
-| `METADATA_MISMATCH` | Paper found, but a field in your citation differs from the database record | Correct the mismatched field; the paper itself is real |
-| `DEAD_URL` | Paper exists but one or more cited URLs return 4xx/5xx or time out | Update or remove the URL |
-| `CONTENT_DRIFT` | Paper exists and URL is live, but fetched content doesn't match what the citation claims | Review whether you are citing the right paper |
-| `NOT_FOUND` | Could not verify in the configured databases | Manual verification recommended; see note below |
-| `UNRESOLVABLE` | Could not attempt verification — citation is missing enough fields (no title, no DOI, no authors) | Add missing fields (year, DOI, venue) and re-run |
-
-### NOT_FOUND is not "fake"
-
-`NOT_FOUND` means the tool could not confirm the paper in the databases it queries. Common legitimate reasons:
-
-- **Recent publications** — papers from the past 6–12 months are often not yet indexed
-- **Preprints** — papers only on institutional repositories or not yet on arXiv
-- **Truncated or missing DOI** — without a DOI, title search may miss the paper
-- **Obscure venues** — proceedings from smaller conferences may not be in major databases
-
-In the HTML report, a strong author-list conflict is displayed separately as
-`疑似幻觉` because it is more concerning than an ordinary version or URL
-warning. This is a risk label, not proof that the source document was fabricated.
-
-### Expected verification rates by publication year
-
-| Publication year | Typical verification rate |
-|---|---|
-| ≤ 2023 | 85–100% |
-| 2024 | 60–85% |
-| 2025 | 30–60% |
-| 2026 | 10–30% |
-
-## Install
+需要 Python 3.10 或更高版本：
 
 ```bash
-pip install paperaudit                 # basic install
-pip install "paperaudit[cli-llm]"      # + DeepSeek for relevance checks
-```
-
-For development:
-
-```bash
-git clone https://github.com/horizon0320/Paper-audit
+git clone https://github.com/horizon0320/Paper-audit.git
 cd Paper-audit
 pip install -e ".[dev]"
 ```
 
-## CLI usage
+### 检查 PDF
 
 ```bash
-# Check a PDF — extracts references automatically (PyMuPDF, multi-column aware)
 paperaudit check paper.pdf
-paperaudit check paper.pdf                    # basic existence check
-paperaudit check paper.pdf --format md > report.md
+```
 
-# Check a BibTeX / RIS / CSL-JSON / NBIB / plaintext file
+程序会自动定位文末参考文献、拆分条目、提取标题/作者/年份等字段，然后查询学术信源并生成终端结果。
+
+### 检查文献文件
+
+支持 BibTeX、RIS、CSL-JSON、NBIB、DOI 列表和普通文本：
+
+```bash
 paperaudit check refs.bib
 paperaudit check refs.ris
 paperaudit check refs.json
+paperaudit check refs.txt
+```
 
-# Read from stdin
-cat refs.txt | paperaudit check -
+也可以检查单条引用：
 
-# Single ad-hoc reference
+```bash
 paperaudit check-one "Vaswani et al. (2017). Attention is all you need. NeurIPS."
-
-# Output formats: table (default), json, md
-paperaudit check refs.bib --format json
-paperaudit check refs.bib --format md > report.md
-
-# Optional checks/cache (disabled by default)
-paperaudit check refs.bib --enable-llm --llm ollama  # enable relevance (requires a configured LLM)
-paperaudit check refs.bib --url              # enable URL liveness
-paperaudit check refs.bib --cache            # enable SQLite cache
-
-# Domain adapters (auto by default)
-paperaudit check refs.bib --domain pubmed   # force PubMed only
-paperaudit check refs.bib --domain dblp    # force DBLP only
-paperaudit check refs.bib --domain none    # disable domain adapters
-
-默认 `--domain auto` 按本工具的计算机论文范围处理：每条有标题的参考文献都会
-查询 DBLP 和 arXiv。两者只提供独立证据，最终结果仍由标题、作者、年份以及其他
-信源的交叉匹配决定，不会因为单一信源命中就直接判定。
 ```
 
-Exit code is non-zero if any reference is `NOT_FOUND` or `DEAD_URL` (useful in CI).
-
-## PDF support
-
-Paper-audit uses **PyMuPDF** for PDF text extraction, which handles multi-column layouts (IEEE/ACM conference papers) correctly. References are automatically located, split, and parsed.
-
-Supported citation styles auto-detected from the reference section:
-- LNCS / Springer (`Lastname, I.: Title. Venue (Year)`)
-- IEEE (`[N] Authors, "Title," Venue, Year`)
-- APA, Vancouver, MLA, Chicago
-
-### LLM fallback for garbled references
-
-If some references can't be parsed (garbled PDF text, unusual formatting), Paper-audit can use the configured LLM to recover the fields.
-
-To skip LLM entirely, keep the default mode (or pass `--no-llm`).
-
-### GROBID (optional, best quality)
-
-For the highest-quality reference extraction, run a local GROBID server:
+输出格式默认为终端表格，也可以保存为 JSON 或 Markdown：
 
 ```bash
-docker run -t --rm -p 8070:8070 lfoppiano/grobid:0.8.1
-export PAPERAUDIT_GROBID_URL=http://localhost:8070/api
-paperaudit check paper.pdf
+paperaudit check paper.pdf --format json > result.json
+paperaudit check paper.pdf --format md > report.md
 ```
 
-When GROBID is available, it is used as the primary extractor. PyMuPDF is the fallback when GROBID is not running.
+## 当前功能
 
-### marker (optional, better text quality for hard PDFs)
+- 从 PDF 自动识别参考文献区域，支持双栏排版和跨页文献。
+- 自动识别 IEEE、APA、LNCS/Springer、Vancouver、MLA、Chicago 等常见格式。
+- 对计算机论文逐条查询 DBLP 和 arXiv，并结合 Crossref、OpenAlex、Semantic Scholar 等学术信源进行交叉匹配。
+- 识别会议论文、预印本和期刊记录之间的同一研究工作关系。
+- 比较原始引用与搜索到的权威记录，包括标题、作者、年份、载体和 DOI。
+- 生成 HTML、JSON 和 Markdown 结果，便于人工复核。
 
-[marker](https://github.com/datalab-to/marker) converts a PDF to Markdown using layout/OCR models instead of raw text extraction. It handles scanned pages, complex layouts, and tables better than PyMuPDF, and its `#`-style Markdown headings make the references section easier to locate reliably.
+## 结果含义
 
-It's opt-in: `marker-pdf` pulls in PyTorch and several GB of layout/OCR models, and conversion is much slower than PyMuPDF (seconds to minutes per PDF, especially on CPU), so it's never enabled just because the package happens to be installed.
+| 结果 | 含义 |
+|---|---|
+| `VERIFIED` | 找到与引用信息一致的学术记录。 |
+| `METADATA_MISMATCH` | 找到相关记录，但标题、作者或年份存在差异。 |
+| `NOT_FOUND` | 当前查询的学术信源没有形成可确认记录，不等同于文献一定不存在。 |
+| `UNRESOLVABLE` | 引用缺少足够字段，暂时无法建立可靠查询。 |
+
+HTML 报告会列出原始引用、搜索到的记录、字段对照和各信源返回情况。作者列表确实不一致时，会单独标记为“疑似幻觉”；作者缩写、大小写和正常的预印本/会议版本差异不会仅凭这些差异判错。
+
+## 环境要求
+
+- Python 3.10+
+- 可访问学术数据库接口的网络环境
+- PDF 输入需要 PyMuPDF（安装项目依赖时会自动安装）
+
+可选设置：
 
 ```bash
-pip install "paperaudit[marker]"
-export PAPERAUDIT_USE_MARKER=1
-paperaudit check paper.pdf
+export PAPERAUDIT_MAILTO="your-email@example.com"
 ```
 
-When enabled, marker is tried first within the text-extraction fallback path (i.e. after GROBID, before PyMuPDF). If marker isn't installed or conversion fails, Paper-audit silently falls back to PyMuPDF → pypdf → pdfminer as usual.
+该邮箱仅用于向部分学术接口提供礼貌联系信息，不是必需项。
 
-## Environment variables
+## 退出状态
 
-All API keys are **optional** — Paper-audit works without any keys but will hit anonymous rate limits faster when checking large reference lists.
-
-| Variable | Default | Description |
-|---|---|---|
-| `PAPERAUDIT_MAILTO` | `paperaudit@example.com` | Polite email for OpenAlex/Crossref API (strongly recommended) |
-| `SEMANTIC_SCHOLAR_API_KEY` | *(optional)* | Raises Semantic Scholar rate limit from ~1 req/s to 100 req/5s — see below |
-| `GOOGLE_BOOKS_API_KEY` | *(optional)* | Raises Google Books limit from ~1k req/day to 100k/day; used for textbook lookup |
-| `PAPERAUDIT_GROBID_URL` | *(optional)* | GROBID REST endpoint for high-quality PDF parsing; use `http://localhost:8070/api` for a local Docker instance |
-| `PAPERAUDIT_USE_MARKER` | *(optional)* | Set to `1`/`true` to use [marker](https://github.com/datalab-to/marker) (PDF→Markdown via layout/OCR models) for PDF text extraction; requires `pip install "paperaudit[marker]"` |
-| `DEEPSEEK_API_KEY` | *(optional)* | Enables relevance checks via DeepSeek; takes priority over Ollama if both are set |
-| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible endpoint for DeepSeek |
-| `DEEPSEEK_MODEL` | `deepseek-chat` | DeepSeek model name |
-| `OLLAMA_MODEL` | *(optional)* | Enables relevance checks via local Ollama (e.g. `llama3.2`, `mistral`); used when `DEEPSEEK_API_KEY` is not set |
-| `OLLAMA_BASE_URL` | `http://localhost:11434/v1` | Ollama OpenAI-compatible endpoint |
-
-### Getting free API keys
-
-**Semantic Scholar** (recommended — significantly improves reliability for large reference lists):
-1. Go to **[semanticscholar.org/product/api#api-key](https://www.semanticscholar.org/product/api#api-key)**
-2. Fill in the form — free, approved within minutes
-3. Add to your shell profile: `export SEMANTIC_SCHOLAR_API_KEY=your_key`
-
-**Ollama** (free, local, no internet required):
-1. Install Ollama from [ollama.com](https://ollama.com) and pull a model: `ollama pull llama3.2`
-2. Set `export OLLAMA_MODEL=llama3.2` — Paper-audit will use it automatically when `DEEPSEEK_API_KEY` is not set
-3. Works with any model Ollama supports; `llama3.2` or `mistral` are good choices for relevance checking
-
-**Google Books** (recommended when references include textbooks):
-1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Enable the "Books API" and create an API key
-3. Add to your shell profile: `export GOOGLE_BOOKS_API_KEY=your_key`
-
-## Supported input formats
-
-| Format | Extension | Notes |
-|---|---|---|
-| PDF | `.pdf` | PyMuPDF extraction; multi-column aware; GROBID optional; marker optional |
-| BibTeX | `.bib` | via bibtexparser |
-| RIS | `.ris` | Zotero, Mendeley, EndNote, Web of Science |
-| CSL JSON | `.json` | Zotero exports |
-| PubMed NBIB | `.nbib` | PubMed direct export |
-| DOI list | `.txt` | One DOI per line |
-| Plaintext | `.txt` | IEEE, APA, LNCS/Springer, Vancouver, MLA, Chicago; auto-detected |
-
-## Reference enrichment
-
-When a citation is incomplete (missing year, DOI, or venue) but the tool finds a matching paper in a database, the result includes an `enriched` field with the complete metadata. Visible in JSON output:
-
-```json
-{
-  "overall_verdict": "VERIFIED",
-  "reference": { "title": "SOEN-101: ...", "year": null, "doi": null },
-  "enriched":  { "title": "SOEN-101: ...", "year": 2025, "doi": "10.1109/ICSE55347.2025.00638", "venue": "ICSE" }
-}
-```
-
-## Caching
-
-Results are cached in SQLite (`~/.cache/paperaudit/cache.db`):
-- **PASS / VERIFIED** results: cached for 30 days
-- **FAIL / NOT_FOUND** results: cached for 1 day (so recent publications get re-checked as databases update)
-
-To force a fresh lookup: `--no-cache`, or delete `~/.cache/paperaudit/cache.db`.
+当存在 `NOT_FOUND` 结果时，命令会返回非零退出状态，适合在 CI 中使用。

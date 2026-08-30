@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "paperaudit"
 version = "0.5.0"
-description = "Citation verification tool: existence, URL liveness, and content relevance checks"
+description = "Citation verification tool for scholarly reference existence and metadata"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -25,7 +25,6 @@ dependencies = [
 [project.optional-dependencies]
 pdf = ["refextract"]
 marker = ["marker-pdf"]
-cli-llm = ["openai>=1.0"]
 domain = []
 dev = [
     "pytest>=8",
