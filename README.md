@@ -69,7 +69,7 @@ paper-audit-web
 
 - 从 PDF 自动识别参考文献区域，支持双栏排版和跨页文献。
 - 自动识别 IEEE、APA、LNCS/Springer、Vancouver、MLA、Chicago 等常见格式。
-- 对计算机论文逐条查询 DBLP 和 arXiv，并结合 Crossref、OpenAlex、Semantic Scholar 等学术信源进行交叉匹配。
+- 你的输入范围默认是计算机论文；`auto` 模式对每条参考文献无条件查询 DBLP 和 arXiv，再结合 Crossref、OpenAlex、Semantic Scholar 等学术信源进行交叉匹配。
 - 识别会议论文、预印本和期刊记录之间的同一研究工作关系。
 - 比较原始引用与搜索到的权威记录，包括标题、作者、年份、载体和 DOI。
 - 生成 HTML、JSON 和 Markdown 结果，便于人工复核。

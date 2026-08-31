@@ -63,7 +63,7 @@ async def verify(
         llm_provider:   "auto" | "deepseek" | "ollama" | "none"
         llm_model:      Override model name, e.g. "llama3.2".
         llm_url:        Override LLM base URL, e.g. "http://localhost:11434/v1".
-        domain_mode:    "auto" (CS: DBLP + arXiv) | "dblp" | "pubmed" | "all" | "none"
+        domain_mode:    "auto" (DBLP + arXiv for every reference) | "dblp" | "pubmed" | "all" | "none"
         use_cache:      Use SQLite result cache (default False; opt in explicitly).
 
     Returns a dict (VerificationReport serialised to JSON-compatible dict).

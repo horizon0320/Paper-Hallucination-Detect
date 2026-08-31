@@ -211,7 +211,7 @@ def check_cmd(
     mailto: Optional[str] = typer.Option(None, "--mailto", help="Email for API politeness"),
     concurrency: int = typer.Option(8, "--concurrency", "-c", help="Max concurrent checks"),
     use_cache: bool = typer.Option(False, "--cache/--no-cache", help="启用 SQLite 缓存（默认关闭）"),
-    domain: str = typer.Option("auto", "--domain", help="Domain adapters: auto (CS: DBLP+arXiv), pubmed, dblp, all, none"),
+    domain: str = typer.Option("auto", "--domain", help="Sources: auto (DBLP+arXiv for every reference), pubmed, dblp, all, none"),
     style: Optional[str] = typer.Option(None, "--style", help="Override plaintext style detection"),
 ):
     """Verify references from a file or stdin."""
