@@ -75,14 +75,20 @@ def clean_dblp_evidence(item: dict) -> None:
 
 def has_author_mismatch(item: dict) -> bool:
     # A NOT_FOUND result may still contain a low-ranked, unrelated candidate.
-    # Its author list is not evidence of a hallucinated citation. Only flag an
-    # author conflict when the selected record is itself a strong title/ID
-    # match; otherwise keep the item in NOT_FOUND or ordinary review.
-    if item.get('overall_verdict') in ('NOT_FOUND', 'UNRESOLVABLE'):
+    # Its author list is not evidence of a hallucinated citation. However, if
+    # the matcher explicitly recorded an author conflict and the title is a
+    # strong match, this is precisely the "疑似幻觉" case even when an older
+    # JSON artifact carried a NOT_FOUND verdict.
+    if item.get('overall_verdict') == 'UNRESOLVABLE':
         return False
     evidence = ((item.get('checks') or [{}])[0]).get('evidence', {})
+    author_mismatch_evidence = any(
+        str(m).lower().startswith('authors:') for m in evidence.get('mismatches', [])
+    )
+    if item.get('overall_verdict') == 'NOT_FOUND' and not author_mismatch_evidence:
+        return False
     if not (evidence.get('exact_doi_match') or evidence.get('exact_arxiv_match')
-            or (evidence.get('title_score') or 0) >= 0.90):
+            or (evidence.get('title_score') or 0) >= 0.80):
         return False
     ref_authors = (item.get('reference') or {}).get('authors') or []
     found_authors = evidence.get('best_candidate_authors') or []
