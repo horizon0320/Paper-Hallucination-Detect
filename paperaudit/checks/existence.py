@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 import time
 import unicodedata
@@ -325,59 +326,82 @@ async def check_existence(
                 break
 
     if effective_doi:
-        for src in all_sources:
+        async def _lookup_doi(src: SourceAdapter):
             try:
-                cand = await src.lookup_doi(effective_doi)
-                api_calls += 1
-                if cand:
-                    score, ev = _score_candidate(ref, cand)
-                    candidates.append((score, {**ev, "source": src.name, "via": "doi_lookup"}, cand))
-            except Exception as e:
-                evidence[f"{src.name}_error"] = str(e)
+                return src, await src.lookup_doi(effective_doi), None
+            except Exception as exc:
+                return src, None, exc
+
+        doi_results = await asyncio.gather(*(_lookup_doi(src) for src in all_sources))
+        api_calls += len(all_sources)
+        for src, cand, error in doi_results:
+            if error is not None:
+                evidence[f"{src.name}_error"] = str(error)
+            if cand:
+                score, ev = _score_candidate(ref, cand)
+                candidates.append((score, {**ev, "source": src.name, "via": "doi_lookup"}, cand))
 
     if ref.arxiv_id:
         # An explicit arXiv identifier is an independent record key and can
         # be resolved alongside title searches.  The same work can have an
         # arXiv preprint and a later conference/journal record, so this is
         # parallel evidence rather than a fallback lookup.
-        for src in all_sources:
+        async def _lookup_arxiv(src: SourceAdapter):
             if not hasattr(src, "lookup_arxiv_id"):
-                continue
+                return src, None, None
             try:
-                cand = await src.lookup_arxiv_id(ref.arxiv_id)
-                api_calls += 1
-                if cand:
-                    score, ev = _score_candidate(ref, cand)
-                    candidates.append((score, {**ev, "source": src.name, "via": "arxiv_lookup"}, cand))
-            except Exception as e:
-                evidence[f"{src.name}_arxiv_error"] = str(e)
+                return src, await src.lookup_arxiv_id(ref.arxiv_id), None
+            except Exception as exc:
+                return src, None, exc
 
-    # Always collect title/author records from every configured adapter.  This
-    # is deliberate record linkage, rather than a fallback after NOT_FOUND.
-    for src in all_sources:
-        try:
-            results = await src.search(ref)
-            api_calls += 1
-            for cand in results:
+        arxiv_results = await asyncio.gather(*(_lookup_arxiv(src) for src in all_sources))
+        api_calls += sum(1 for src in all_sources if hasattr(src, "lookup_arxiv_id"))
+        for src, cand, error in arxiv_results:
+            if error is not None:
+                evidence[f"{src.name}_arxiv_error"] = str(error)
+            if cand:
                 score, ev = _score_candidate(ref, cand)
-                candidates.append((score, {**ev, "source": src.name, "via": "search"}, cand))
-        except Exception as e:
-            evidence[f"{src.name}_error"] = str(e)
+                candidates.append((score, {**ev, "source": src.name, "via": "arxiv_lookup"}, cand))
+
+    # Always collect title/author records from every configured adapter. This
+    # is deliberate record linkage, rather than a fallback after NOT_FOUND.
+    # Search the independent registries concurrently: one slow/blocked API
+    # should not add its timeout to every other source in the batch.
+    async def _search_source(src: SourceAdapter):
+        try:
+            return src, await src.search(ref), None
+        except Exception as exc:
+            return src, [], exc
+
+    search_results = await asyncio.gather(*(_search_source(src) for src in all_sources))
+    api_calls += len(all_sources)
+    for src, results, error in search_results:
+        if error is not None:
+            evidence[f"{src.name}_error"] = str(error)
+        for cand in results:
+            score, ev = _score_candidate(ref, cand)
+            candidates.append((score, {**ev, "source": src.name, "via": "search"}, cand))
 
     # URL identifiers are also part of the primary record-linkage pass.  A
     # landing page can identify a work even when title search is noisy or the
     # publisher record is not indexed by the generic sources.
     if ref.urls:
-        for src in all_sources:
-            for url in ref.urls:
-                try:
-                    cand = await src.lookup_url(url)
-                    api_calls += 1
-                    if cand:
-                        score, ev = _score_candidate(ref, cand)
-                        candidates.append((score, {**ev, "source": src.name, "via": "url_lookup"}, cand))
-                except Exception as e:
-                    evidence[f"{src.name}_url_error"] = str(e)
+        async def _lookup_url(src: SourceAdapter, url: str):
+            try:
+                return src, await src.lookup_url(url), None
+            except Exception as exc:
+                return src, None, exc
+
+        url_results = await asyncio.gather(
+            *(_lookup_url(src, url) for src in all_sources for url in ref.urls)
+        )
+        api_calls += len(all_sources) * len(ref.urls)
+        for src, cand, error in url_results:
+            if error is not None:
+                evidence[f"{src.name}_url_error"] = str(error)
+            if cand:
+                score, ev = _score_candidate(ref, cand)
+                candidates.append((score, {**ev, "source": src.name, "via": "url_lookup"}, cand))
 
     # Preserve a per-source audit trail even when no candidate survives the
     # matching thresholds. This lets the HTML report distinguish "no match"
