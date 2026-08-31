@@ -57,13 +57,15 @@ def _build_domain_sources(ref: Reference, opts: VerifyOptions) -> list:
         domain = [DBLPAdapter()]
     elif opts.domain_mode == "auto":
         # This application is scoped to computer-science papers.  Always run
-        # both CS registries for every titled reference; do not infer the
-        # domain from a venue string that may be missing or mangled by PDF
-        # extraction.  DBLP/arXiv are evidence sources, not authoritative on
-        # their own; the cross-source matcher still decides the verdict.
-        if ref.title:
-            domain.append(DBLPAdapter())
-            domain.append(ArXivAdapter())
+        # both CS registries for every reference; do not infer the domain from
+        # a venue string that may be missing or mangled by PDF extraction.
+        # Adapters decide whether the available fields are sufficient to issue
+        # a query.  This keeps the audit trail explicit (including a
+        # no_match for a malformed/unresolvable record) and guarantees that a
+        # valid title, author list, DOI, URL, or arXiv id is never skipped just
+        # because one parser field was empty.
+        domain.append(DBLPAdapter())
+        domain.append(ArXivAdapter())
 
     return domain
 

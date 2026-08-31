@@ -50,6 +50,16 @@ class TestEngine:
         for source in sources:
             await source.close()
 
+    async def test_auto_mode_includes_dblp_and_arxiv_without_title(self):
+        # A PDF parser can lose the title while still retaining an identifier,
+        # authors, venue, or URL.  Auto mode must not silently skip the
+        # computer-science registry pass in that situation.
+        ref = Reference(authors=["A. Researcher"], year=2024)
+        sources = _build_domain_sources(ref, VerifyOptions(domain_mode="auto"))
+        assert {source.name for source in sources} >= {"dblp", "arxiv"}
+        for source in sources:
+            await source.close()
+
     async def test_unconfirmed_conflict_does_not_propagate_candidate_metadata(self):
         ref = Reference(title="Attention is all you need", year=2017)
         evidence = {

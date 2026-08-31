@@ -105,6 +105,8 @@ class TestDoiList:
 
 class TestPlaintext:
     def test_canonical_author_key_handles_pdf_glued_citations(self):
+        assert canonical_author_key("Su, H") == "su"
+        assert canonical_author_key("Carvalho, O. L. F. d") == "carvalho"
         assert canonical_author_key("KCobbe et al.") == "cobbe"
         assert canonical_author_key("GPQA DiamondRein et al.") == "rein"
         assert canonical_author_key("MultiPL-ECassano et al.") == "cassano"

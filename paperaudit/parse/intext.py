@@ -27,6 +27,12 @@ def canonical_author_key(author: str) -> str:
     leading capitals from a glued token so these forms match the full record.
     """
     value = re.split(r"\s+(?:et\s+al\.?|and|&)\s*", author, maxsplit=1, flags=re.IGNORECASE)[0]
+    # Structured bibliography authors are commonly represented as
+    # ``Surname, Initials``.  The initials are not the surname key; using the
+    # last token of the whole string would turn ``Su, H`` into ``h`` and make
+    # an existing bibliography record look like a missing body citation.
+    if "," in value:
+        value = value.split(",", 1)[0].strip()
     tokens = re.findall(r"[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*", value)
     if not tokens:
         return ""

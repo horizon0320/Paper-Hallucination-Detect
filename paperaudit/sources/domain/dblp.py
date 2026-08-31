@@ -6,6 +6,7 @@ import asyncio
 import json
 import urllib.parse
 import urllib.request
+import weakref
 
 import httpx
 
@@ -16,7 +17,24 @@ from paperaudit.sources.base import SourceAdapter
 _BASE = "https://dblp.org/search/publ/api"
 _FALLBACK_BASE = "http://dblp.org/search/publ/api"
 _DISAMBIGUATION_SUFFIX = re.compile(r"\s+\d{4}$")
-_DBLP_CONCURRENCY = asyncio.Semaphore(2)
+_DBLP_CONCURRENCY_LIMIT = 2
+_LOOP_SEMAPHORES: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = weakref.WeakKeyDictionary()
+
+
+def _get_dblp_semaphore() -> asyncio.Semaphore:
+    """Return a DBLP limiter bound to the current event loop.
+
+    Python 3.9 binds an asyncio semaphore to the loop that first waits on it.
+    A module-level semaphore therefore leaks loop affinity across repeated
+    ``asyncio.run`` calls (and caused ``Future attached to a different loop``
+    errors in CLI verification). Keep one short-lived limiter per loop.
+    """
+    loop = asyncio.get_running_loop()
+    semaphore = _LOOP_SEMAPHORES.get(loop)
+    if semaphore is None:
+        semaphore = asyncio.Semaphore(_DBLP_CONCURRENCY_LIMIT)
+        _LOOP_SEMAPHORES[loop] = semaphore
+    return semaphore
 
 _CS_PATTERNS = [
     # ML / AI — abbreviations and unambiguous full-name fragments
@@ -133,7 +151,7 @@ class DBLPAdapter(SourceAdapter):
     async def search(self, ref: Reference) -> list[Candidate]:
         if not ref.title:
             return []
-        async with _DBLP_CONCURRENCY:
+        async with _get_dblp_semaphore():
             return await self._search_limited(ref)
 
     async def _search_limited(self, ref: Reference) -> list[Candidate]:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import pytest
 import respx
@@ -12,7 +13,7 @@ from paperaudit.sources.semantic_scholar import SemanticScholarAdapter
 from paperaudit.sources.arxiv import ArXivAdapter
 from paperaudit.sources.zenodo import ZenodoAdapter
 from paperaudit.sources.webpage import WebPageAdapter
-from paperaudit.sources.domain.dblp import is_cs
+from paperaudit.sources.domain.dblp import DBLPAdapter, is_cs
 
 
 _OPENALEX_WORK = {
@@ -324,6 +325,39 @@ def test_compact_neurips_venue_enables_dblp_in_auto_mode():
         title="Understanding the effective receptive field in deep convolutional neural networks",
         raw="in Proc.Adv.Neural Inform. Process. Syst., 2016, pp. 4898-4906.",
     ))
+
+
+def test_dblp_semaphore_is_safe_across_python39_event_loops():
+    """Repeated CLI-style asyncio.run calls must not reuse a loop-bound limiter."""
+    payload = {
+        "result": {
+            "hits": {
+                "hit": [{
+                    "info": {
+                        "title": "Attention is all you need",
+                        "authors": {"author": [{"text": "Ashish Vaswani"}]},
+                        "year": "2017",
+                        "venue": "NeurIPS",
+                    }
+                }]
+            }
+        }
+    }
+
+    async def run_once():
+        adapter = DBLPAdapter()
+        try:
+            results = await adapter.search(Reference(title="Attention is all you need"))
+            assert results and results[0].year == 2017
+        finally:
+            await adapter.close()
+
+    with respx.mock:
+        respx.get("http://dblp.org/search/publ/api").mock(
+            return_value=httpx.Response(200, json=payload)
+        )
+        asyncio.run(run_once())
+        asyncio.run(run_once())
 
 
 @pytest.mark.asyncio

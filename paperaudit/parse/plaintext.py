@@ -176,6 +176,7 @@ def _split_semicolon_author_year(lines: list[str]) -> list[str]:
     candidate_re = re.compile(
         r"(?:^|(?<=\.\s))"
         r"(?P<author>(?:(?:de|da|del|dos|van|von|e)\s+)?"
+        r"(?:(?:[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’\-]*|der|den)\s+){0,3}"
         r"[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’\-]{1,60},\s*)"
     )
     starts: list[int] = []
