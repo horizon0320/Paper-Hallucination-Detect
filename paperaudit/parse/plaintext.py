@@ -95,6 +95,11 @@ def _fix_hyphenated_breaks(text: str) -> str:
 
 def _cleanup_chunk(chunk: str) -> str:
     chunk = _fix_hyphenated_breaks(chunk)
+    # Once physical lines are joined, a line-wrap hyphen is represented as
+    # ``detec- tion`` rather than ``detec-\ntion``.  Remove this artifact only
+    # when both fragments are lowercase; ordinary compounds such as
+    # ``multi-task`` have no whitespace after the hyphen and remain intact.
+    chunk = re.sub(r"(?<=[a-z]{2})-\s+(?=[a-z])", "", chunk)
     chunk = re.sub(r"\s+", " ", chunk).strip()
     # PyMuPDF can expose a running page footer as an isolated 4-digit token
     # inside a reference when a column continues on the next page (e.g.
@@ -110,12 +115,15 @@ def split(text: str) -> list[str]:
     text = _fix_hyphenated_breaks(text)
     lines = text.splitlines()
 
-    for strategy in [
-        _split_numbered,
-        _split_author_year,
-        _split_blank_lines,
-        _split_hanging_indent,
-    ]:
+    # PDF block extraction preserves a blank line between bibliography text
+    # blocks. Prefer those explicit boundaries when they are plentiful; this
+    # is especially important for ACL/EMNLP two-column references where a
+    # wrapped author line can otherwise be mistaken for a new entry.
+    strategies = [_split_numbered]
+    if sum(1 for line in lines if not line.strip()) >= 2:
+        strategies.append(_split_blank_lines)
+    strategies.extend([_split_author_year, _split_hanging_indent])
+    for strategy in strategies:
         chunks = strategy(lines)
         chunks = _split_embedded_organization_refs(chunks)
         # PDF extraction may place an entry's author list on one line and its
@@ -183,8 +191,16 @@ def _split_embedded_organization_refs(chunks: list[str]) -> list[str]:
             # mistaken for a new record.
             author_start = bool(
                 (first_sentence.count(",") >= 1 or re.search(r"\band\b", first_sentence, re.IGNORECASE))
+                and ":" not in first_sentence
                 and _looks_like_author_start(first_sentence + ".")
             )
+            # ``et al.`` entries are frequently followed by a title sentence
+            # that starts with a capitalized word (e.g. ``et al. 2023. Factool``).
+            # That period is the author/year boundary, not an embedded record
+            # boundary.  Without this guard the title is detached and then
+            # parsed as a bogus author-only reference.
+            if re.search(r"\bet\s+al\.?\s+(?:19|20)\d{2}[a-z]?\.$", left_tail, re.IGNORECASE):
+                author_start = False
             compact_org_year = bool(
                 re.match(r"^[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’&\- ]{1,90},\s*(?:19|20)\d{2}[a-z]?\.", right)
                 and not _PUBLISHER_YEAR_TAIL_RE.match(right.strip())
@@ -257,6 +273,30 @@ def _merge_wrapped_author_chunks(chunks: list[str]) -> list[str]:
                     merged.append(f"{current} {following}")
                     index += 2
                     continue
+            # PDF block extraction can place a long URL in its own block
+            # directly after the author/title block (common for ACL web
+            # citations). Keep that URL with the same record rather than
+            # creating a title-less phantom reference.
+            if (
+                following_text
+                and re.match(r"^https?://", following_text, re.IGNORECASE)
+                and re.search(r"\b(?:19|20)\d{2}[a-z]?\b", current_text, re.IGNORECASE)
+            ):
+                merged.append(f"{current} {following}")
+                index += 2
+                continue
+            # A long ACL title can continue in a separate PDF text block
+            # without repeating its year. Merge such a non-author continuation
+            # into the preceding record instead of creating a title fragment.
+            if (
+                following_text
+                and re.search(r"\b(?:19|20)\d{2}[a-z]?\b", current_text, re.IGNORECASE)
+                and not re.search(r"\b(?:19|20)\d{2}[a-z]?\b", following_text, re.IGNORECASE)
+                and not _looks_like_author_start(following_text.splitlines()[0].strip())
+            ):
+                merged.append(f"{current} {following}")
+                index += 2
+                continue
         merged.append(current)
         index += 1
     return merged
@@ -271,19 +311,31 @@ def _is_wrapped_author_only_chunk(value: str) -> bool:
     # same wrapped-entry shape: label on one line, article title on the next.
     if _looks_like_organization_line(value):
         return True
-    if re.search(r"\b(?:19|20)\d{2}\b", value):
+    # ACL/EMNLP blocks often put the publication year on the author-only
+    # block (``... and C. Author. 2024a.``) before the title starts in the
+    # next block.  Treat only a terminal year as part of this wrapper; years
+    # elsewhere can belong to a title or venue and should not be merged.
+    year_tail = re.search(r"\s+(?:19|20)\d{2}[a-z]?\s*\.\s*$", value, re.IGNORECASE)
+    author_value = value[:year_tail.start()].rstrip(" .,;") if year_tail else value
+    if re.search(r"\b(?:19|20)\d{2}\b", author_value):
         return False
     if re.search(r"[:\"']|https?://|\b(?:In|Proceedings|Journal|Conference)\b", value, re.IGNORECASE):
         return False
     # Require multiple author separators so a short title sentence is not
     # mistaken for an author-only fragment.
-    if value.count(",") < 2 and not re.search(r"\band\b", value, re.IGNORECASE):
+    if author_value.count(",") < 2 and not re.search(r"\band\b", author_value, re.IGNORECASE):
         return False
-    if not _looks_like_author_start(value):
+    if not _looks_like_author_start(author_value):
         return False
+    # Semicolon-delimited styles (common in AAAI/EMNLP exports) keep each
+    # author's initials after the surname comma. Treat a clearly name-shaped
+    # semicolon list as one wrapped author block before applying the
+    # comma-delimited token checks below.
+    if ";" in author_value and author_value.count(";") >= 1:
+        return True
     # Every comma/and-delimited segment should look like a person's name;
     # this rejects prose sentences that happen to contain several commas.
-    author_text = re.sub(r"\s+and\s+", ",", value[:-1], flags=re.IGNORECASE)
+    author_text = re.sub(r"\s+and\s+", ",", author_value, flags=re.IGNORECASE)
     parts = [part.strip() for part in author_text.split(",") if part.strip()]
     if len(parts) < 2:
         return False
@@ -410,13 +462,16 @@ def _split_author_year(lines: list[str]) -> list[str]:
             )
         )
         author_boundary = previous_boundary and (
-            ("," in line and _looks_like_author_start(line)) or group_author_boundary
+            (("," in line or re.search(r"\band\b", line, re.IGNORECASE))
+             and _looks_like_author_start(line))
+            or group_author_boundary
         )
         # A wrapped author list may itself begin with a name-shaped line (for
         # example ``Xiao, ... et al.``). Do not split it until the current
         # chunk has crossed its author→title boundary.
         can_start_plain_reference = plain_author_year and previous_boundary
-        if starts_new_reference and (
+        current_has_year = bool(re.search(r"\b(?:19|20)\d{2}[a-z]?\s*\.\s*$|\b(?:19|20)\d{2}[a-z]?\s*\.\s+", " ".join(current), re.IGNORECASE))
+        if starts_new_reference and current_has_year and (
             (aaai_author_year and previous_boundary)
             or can_start_plain_reference
             or author_boundary
@@ -560,6 +615,10 @@ def _looks_like_author_start(value: str) -> bool:
             first.casefold().rstrip(".") == "an"
             and re.match(r"^An\s+[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ'’\-]+,", value)
         )
+        and not (
+            first.casefold().rstrip(".") == "or"
+            and re.match(r"^Or\s+[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ'’\-]+,", value)
+        )
     ):
         return False
     if len(second.rstrip(".")) > 1 and second.casefold().rstrip(".") in _AUTHOR_START_STOPWORDS:
@@ -571,8 +630,8 @@ def _looks_like_author_start(value: str) -> bool:
 
     first_clean = clean_name(first)
     second_clean = clean_name(second)
-    first_is_name = bool(re.fullmatch(r"[A-ZÀ-ÿ][a-zà-ÿ'’\-]+", first_clean))
-    second_is_name = bool(re.fullmatch(r"[A-ZÀ-ÿ][a-zà-ÿ'’\-]+", second_clean))
+    first_is_name = bool(re.fullmatch(r"[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’\-]*[a-zà-ÿ]", first_clean))
+    second_is_name = bool(re.fullmatch(r"[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’\-]*[a-zà-ÿ]", second_clean))
     if first_clean.casefold() in {"openai", "gemma", "meta", "anthropic"}:
         return True
     if first_is_initial:
@@ -666,6 +725,12 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
     # landing-page URL untouched.
     chunk = re.sub(
         r"(https?://[^\s]+/)\s+([A-Za-z0-9][A-Za-z0-9._/-]*-[A-Za-z0-9._/-]*)",
+        r"\1\2",
+        chunk,
+        flags=re.IGNORECASE,
+    )
+    chunk = re.sub(
+        r"(https?://[^\s]+)\s+([A-Za-z0-9]+[_/-][A-Za-z0-9._/-]*)",
         r"\1\2",
         chunk,
         flags=re.IGNORECASE,
@@ -795,6 +860,8 @@ def _normalize_compact_title(value: str | None) -> str | None:
     # (``AI-ModelScope/CodeAlpaca-20k``).
     def split_camel_token(match: re.Match[str]) -> str:
         token = match.group(0)
+        if token.casefold() in {"arxiv", "openai"}:
+            return token
         if any(ch in token for ch in "/-0123456789"):
             return token
         return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", token)
@@ -937,59 +1004,87 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
         authors = _parse_author_list(authors_text)
         rest = chunk[year_m.end():].lstrip(" .,:;")
     else:
+        # Natural-name ACL/EMNLP references conventionally place the year
+        # immediately after the author sentence: ``A. Author and B. Author.
+        # 2024. Title.``  Use that terminal period as the boundary before the
+        # generic initial-aware scan; otherwise the final author's name absorbs
+        # ``2024`` as if it were part of the author string.
+        natural_prefix = chunk[:year_m.start()].rstrip()
+        natural_author = natural_prefix[:-1].rstrip() if natural_prefix.endswith(".") else ""
+        # Do not mistake a complete author sentence plus a title sentence for
+        # one long author list (e.g. ``Alex Hore and Djemel Ziou. Image ...``).
+        # Initials such as ``A. Vaswani`` do not satisfy the name-shaped
+        # prefix check and therefore remain eligible for the generic scan.
+        first_sentence = re.search(r"\.\s+(?=[A-ZÀ-ÿ])", natural_prefix)
+        if first_sentence:
+            prefix_before_sentence = natural_prefix[:first_sentence.start()].strip()
+            suffix_after_sentence = natural_prefix[first_sentence.end():].strip()
+            if suffix_after_sentence and _looks_like_author_start(prefix_before_sentence):
+                natural_author = ""
+        if natural_author and (
+            _looks_like_author_start(natural_author)
+            or _looks_like_group_author(natural_author)
+        ):
+            authors_text = natural_author
+            authors = _parse_author_list(authors_text)
+            rest = chunk[year_m.end():].lstrip(" .,:;")
+            # Continue with the common title/venue handling below.
+            boundary = True
+        else:
+            boundary = None
         # Find the end of the author sentence. Initials contain periods, so
         # require a following capitalized title-like phrase and a long enough
         # comma-rich prefix before accepting the boundary.
-        boundary = None
-        # Repository/Zenodo records often use a project slug as the title and
-        # therefore begin with a lowercase token (for example
-        # ``Yu, X. et al. deepseek-ai/DeepSeek-V3: v1.0.0. Zenodo ...``).
-        # The general capitalized-title lookahead intentionally rejects this,
-        # so recognize the bounded ``et al. <slug>`` form explicitly.
-        slug_boundary = re.search(
-            r"\.\s+(?=(?:deepseek-ai|openai|google|meta|anthropic)[/:-])",
-            chunk,
-            re.IGNORECASE,
-        )
-        if slug_boundary and ("," in chunk[:slug_boundary.start()] or "et al" in chunk[:slug_boundary.start()].casefold()):
-            boundary = slug_boundary
-        for m in re.finditer(r"\.\s+(?=[A-ZÀ-ÿ][^\n]{3,140})", chunk):
-            if boundary is not None:
-                break
-            prefix = chunk[:m.start()]
-            after = chunk[m.end():].lstrip()
-            # Initial-based author lists contain many periods (``Y. Cao, B.
-            # Yang``). If the text after a candidate period still begins with
-            # another comma-separated name, this is not the author/title
-            # boundary.
-            if _looks_like_author_continuation(after) or (
-                re.search(r"(?:^|[\s,])(?:and\s+)?[A-Z]$", prefix)
-                and re.match(r"^[A-Z]\.\s+[A-Z][a-zà-ÿ]", after)
-            ):
-                continue
-            # A final initial before the period (``and Z. Zhang``) is still
-            # part of the author list when the next text is another
-            # name-shaped continuation.  If the next text is a title (for
-            # example ``Iwasawa, Y. Large language models...``), the period
-            # is the actual author/title boundary.
-            if re.search(r"(?:^|[\s,])(?:and\s+)?[A-Z]$", prefix) and re.match(
-                r"^(?:[A-Z][a-zà-ÿ'’\-]+|and),\s+(?:(?:[A-Z]\.?|and)\s+)?(?:[A-Z]\.\s+)?[A-ZÀ-ÿ][a-zà-ÿ'’\-]+",
-                after,
-            ):
-                continue
-            if (
-                prefix.count(",") >= 1
-                or re.search(r"\band\b", prefix, re.IGNORECASE)
-                or _looks_like_author_start(prefix.strip())
-                or _looks_like_group_author(prefix.strip())
-            ):
-                boundary = m
-                break
         if boundary is None:
-            return _extract_generic(chunk)[0], [], None
-        authors_text = chunk[:boundary.start()].strip(" .,:;")
-        authors = _parse_author_list(authors_text)
-        rest = chunk[boundary.end():].strip()
+            # Repository/Zenodo records often use a project slug as the title and
+            # therefore begin with a lowercase token (for example
+            # ``Yu, X. et al. deepseek-ai/DeepSeek-V3: v1.0.0. Zenodo ...``).
+            # The general capitalized-title lookahead intentionally rejects this,
+            # so recognize the bounded ``et al. <slug>`` form explicitly.
+            slug_boundary = re.search(
+                r"\.\s+(?=(?:deepseek-ai|openai|google|meta|anthropic)[/:-])",
+                chunk,
+                re.IGNORECASE,
+            )
+            if slug_boundary and ("," in chunk[:slug_boundary.start()] or "et al" in chunk[:slug_boundary.start()].casefold()):
+                boundary = slug_boundary
+            for m in re.finditer(r"\.\s+(?=[A-ZÀ-ÿ][^\n]{3,140})", chunk):
+                if boundary is not None:
+                    break
+                prefix = chunk[:m.start()]
+                after = chunk[m.end():].lstrip()
+                # Initial-based author lists contain many periods (``Y. Cao, B.
+                # Yang``). If the text after a candidate period still begins with
+                # another comma-separated name, this is not the author/title
+                # boundary.
+                if _looks_like_author_continuation(after) or (
+                    re.search(r"(?:^|[\s,])(?:and\s+)?[A-Z]$", prefix)
+                    and re.match(r"^[A-Z]\.\s+[A-Z][a-zà-ÿ]", after)
+                ):
+                    continue
+                # A final initial before the period (``and Z. Zhang``) is still
+                # part of the author list when the next text is another
+                # name-shaped continuation.  If the next text is a title (for
+                # example ``Iwasawa, Y. Large language models...``), the period
+                # is the actual author/title boundary.
+                if re.search(r"(?:^|[\s,])(?:and\s+)?[A-Z]$", prefix) and re.match(
+                    r"^(?:[A-Z][a-zà-ÿ'’\-]+|and),\s+(?:(?:[A-Z]\.?|and)\s+)?(?:[A-Z]\.\s+)?[A-ZÀ-ÿ][a-zà-ÿ'’\-]+",
+                    after,
+                ):
+                    continue
+                if (
+                    prefix.count(",") >= 1
+                    or re.search(r"\band\b", prefix, re.IGNORECASE)
+                    or _looks_like_author_start(prefix.strip())
+                    or _looks_like_group_author(prefix.strip())
+                ):
+                    boundary = m
+                    break
+            if boundary is None:
+                return _extract_generic(chunk)[0], [], None
+            authors_text = chunk[:boundary.start()].strip(" .,:;")
+            authors = _parse_author_list(authors_text)
+            rest = chunk[boundary.end():].strip()
 
     # Stop the title at common venue/metadata markers; otherwise use the first
     # sentence boundary. This keeps search queries focused on the work title.
@@ -1056,7 +1151,7 @@ def _looks_like_group_author(value: str) -> bool:
         re.match(
             r"^(?:OpenAI(?:\s+et\s+al\.?)?|Aider|DeepSeek(?:-AI)?(?:\s+et\s+al\.?)?|Google|Meta|Anthropic|"
             r"Chinese Mathematical Society(?:\s*\([^)]*\))?|"
-            r"Mathematical Association of America)(?:\s+Team)?$",
+            r"Mathematical Association of America|Vectara)(?:\s+Team)?$",
             value,
             re.IGNORECASE,
         )
@@ -1114,8 +1209,8 @@ def _parse_author_list(text: str) -> list[str]:
     # inside initial blocks (``Y.Li,X.Li,andJ.Yang``). Restore these separators
     # before applying the author split rules below.
     text = re.sub(r",(?=[A-Z])", ", ", text)
-    text = re.sub(r",\s*and(?=\s|[A-Z])", ", and ", text, flags=re.IGNORECASE)
-    text = re.sub(r"\band(?=[A-Z])", "and ", text)
+    text = re.sub(r",\s*and\b(?=\s|[A-Z])", ", and ", text, flags=re.IGNORECASE)
+    text = re.sub(r"\band\b(?=[A-Z])", "and ", text)
     text = re.sub(r"\b([A-Z])\.([A-Z][a-zà-öø-ÿ'’\-]+)", r"\1. \2", text)
     # Some PDF text layers drop the comma between adjacent abbreviated
     # authors, producing strings such as ``K. R. HeGirshick`` for the IEEE
@@ -1156,7 +1251,7 @@ def _parse_author_list(text: str) -> list[str]:
     # surname lookahead so ``Sablayrolles, A., J´egou, H`` is split into two
     # authors while ``Chung, H.W.`` remains a single author.
     parts = re.split(
-        r"(?i:\s+and\s+)|;\s*|,\s+(?=[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ'’´¨`\-])|"
+        r"(?i:\s+and\s+)|;\s*|,\s+(?=[A-ZÀ-ÖØ-ÝŁ][a-zà-öø-ÿ'’´¨`\-])|"
         # Initial-based authors are common in IEEE/NeurIPS references and
         # were previously glued to the preceding author (``Shi, J Zico
         # Kolter`` or ``Liu, M.A.P. Chamikara``). Split only when the comma
@@ -1176,6 +1271,11 @@ def _parse_author_list(text: str) -> list[str]:
     authors = []
     for p in parts:
         p = re.sub(r"^and\s+", "", p.strip(), flags=re.IGNORECASE).rstrip(",.")
+        # Natural-name references put the publication year after the final
+        # author (``... and Yossi Matias. 2022.``).  If a block boundary or
+        # normalization leaves that suffix attached to the author token,
+        # remove it here rather than exposing the year as part of the name.
+        p = re.sub(r"\s*\.\s*(?:19|20)\d{2}[a-z]?\s*$", "", p, flags=re.IGNORECASE)
         if p and len(p) > 1 and p.lower().replace(" ", "") not in ("etal", "etal.", "others"):
             authors.append(p)
     # Preserve the complete author list. Truncating at ten names causes valid

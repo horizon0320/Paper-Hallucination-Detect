@@ -144,6 +144,47 @@ Carol Brown. Second example paper. In Proceedings of Testing, 2021.
         assert "Journal of Testing" in chunks[0]
         assert chunks[1].startswith("Carol Brown")
 
+    def test_acl_emnlp_block_boundaries_and_author_year_fields(self):
+        # ACL/EMNLP PDFs commonly expose one text block per reference, with
+        # long entries split across blocks.  Blank-block boundaries must win
+        # over the natural-name heuristic so wrapped author lines do not
+        # become separate phantom references.
+        text = """\
+I Chern, Steffi Chern, Shiqi Chen, Weizhe Yuan, Kehua Feng, Chunting Zhou,
+Junxian He, Graham Neubig, Pengfei Liu, et al. 2023.
+Factool: Factuality detection in generative ai–a tool augmented framework for multi-task and multi-domain scenarios.
+arXiv preprint arXiv:2307.13528.
+
+Cheng-Han Chiang and Hung-Yi Lee. 2023.
+Can large language models be an alternative to human evaluations?
+In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics.
+
+Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi,
+Yasmine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava,
+Shruti Bhosale, et al. 2023.
+Llama 2: Open foundation and fine-tuned chat models.
+arXiv preprint arXiv:2307.09288.
+"""
+        chunks = split(text)
+        refs = [extract_fields(chunk, Style.AUTHOR_YEAR) for chunk in chunks]
+        assert len(refs) == 3
+        assert refs[0].title and refs[0].title.startswith("Factool:")
+        assert refs[0].authors[-1] == "Pengfei Liu"
+        assert refs[1].title == "Can large language models be an alternative to human evaluations?"
+        assert refs[1].authors == ["Cheng-Han Chiang", "Hung-Yi Lee"]
+        assert refs[2].title == "Llama 2: Open foundation and fine-tuned chat models"
+        assert refs[2].arxiv_id == "2307.09288"
+
+    def test_author_year_strips_year_from_last_author(self):
+        ref = extract_fields(
+            "Or Honovich, Roee Aharoni, Jonathan Herzig, Hagai Taitelbaum, "
+            "Doron Kukliansy, Vered Cohen, Thomas Scialom, Idan Szpektor, "
+            "Avinatan Hassidim, and Yossi Matias. 2022. True: Re-evaluating "
+            "factual consistency evaluation.",
+            Style.AUTHOR_YEAR,
+        )
+        assert ref.authors[-1] == "Yossi Matias"
+
     def test_extract_single_author_title_after_period(self):
         ref = extract_fields(
             "Lei Su. Can we get rid of handcrafted feature extractors? "

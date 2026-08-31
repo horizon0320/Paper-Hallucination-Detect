@@ -237,6 +237,14 @@ def _remove_pdf_bibliography_noise(lines: list[str]) -> list[str]:
     cleaned: list[str] = []
     for line in lines:
         value = line.strip()
+        # Keep block boundaries emitted by the PyMuPDF extractor.  ACL/EMNLP
+        # PDFs commonly store one bibliography entry per text block, while a
+        # single entry may itself span several blocks (author line + title).
+        # Preserving the blank separators lets the generic splitter merge
+        # wrapped author blocks without joining adjacent records.
+        if not value:
+            cleaned.append("")
+            continue
         # Some IEEE PDF text layers append the next page's running journal
         # header to the end of the preceding reference, e.g. ``... pp.
         # 9626-9635. IEEE TRANSACTIONS ... JUNE 2025``.  This is page chrome,
@@ -387,7 +395,13 @@ def _extract_text(path: Path) -> str:
         doc = fitz.open(str(path))
         pages = []
         for page in doc:
-            pages.append(page.get_text())
+            # ``page.get_text()`` flattens adjacent ACL/EMNLP bibliography
+            # blocks into a continuous stream.  Block text preserves the
+            # publisher's entry boundaries and still follows the PDF's
+            # column reading order when ``sort`` is omitted.
+            blocks = page.get_text("blocks")
+            page_parts = [block[4].strip() for block in blocks if len(block) > 4 and block[4].strip()]
+            pages.append("\n\n".join(page_parts))
         doc.close()
         # Keep page boundaries visible to section detection. A number of PDF
         # templates place a repeated header/footer between the final reference
