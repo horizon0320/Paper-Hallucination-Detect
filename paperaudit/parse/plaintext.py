@@ -1169,10 +1169,13 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
             r"(?:19|20)\d{2}\s+\d+(?:st|nd|rd|th)\s+International\b|"
             r"Advances\s+in|Under\s+review|(?:IEEE\s+)?Transactions\s+(?:of|on)\b|"
             r"(?:IEEE\s+)?Journal\s+of\b|ACM\s+Computing|Foundations\s+and\s+Trends\b|Center\s+for\b|"
-            # IEEE journal citations often append volume/issue/pages without
-            # a leading ``Journal of`` marker (e.g. ``IEEE Transactions ...,
-            # 32 (11):7505-7517``). Stop the title before that carrier text.
-            r",\s*\d{1,4}\s*\(\s*\d{1,4}\s*\)\s*[:;,]\s*\d{1,6}(?:[-–]\d{1,6})?\b|"
+            # Journal/conference records often append a carrier name followed
+            # by volume/issue/pages without a stable keyword (e.g.
+            # ``Remote Sensing, 15 (18):4588, 2023`` or
+            # ``Pattern Recognition 123 (2022) 108...``). The structural
+            # boundary is deliberately generic and applies across publishers.
+            r"(?=[A-Z][^.\n]{2,140},\s*\d{1,4}\s*(?:\(\s*\d{1,4}\s*\))?\s*[:;,]\s*\d{1,6}(?:[-–]\d{1,6})?\b)|"
+            r"(?=[A-Z][^.\n]{2,140}\s+\d{1,4}\s*\(\s*(?:19|20)\d{2}\s*\)\s*\d{1,6})|"
             r"LongCat\s+LLM|Zenodo|URL\b|https?://|;\s+https?://))",
         rest,
         re.IGNORECASE,

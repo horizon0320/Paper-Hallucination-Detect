@@ -321,6 +321,24 @@ Next Author and Another Author. A second paper. In Conference, 2023.
         assert ref.authors == ["Xiaohong Liu"]
         assert ref.arxiv_id == "2103.10596"
 
+    def test_author_year_stops_generic_carrier_volume_pages(self):
+        cases = [
+            (
+                "A. Researcher. A useful remote sensing method. Remote Sensing, 15 (18):4588, 2023.",
+                "A useful remote sensing method",
+                "Remote Sensing, 15 (18):4588, 2023",
+            ),
+            (
+                "A. Researcher. A useful vision method. Pattern Recognition 123 (2022) 108456.",
+                "A useful vision method",
+                "Pattern Recognition 123 (2022) 108456",
+            ),
+        ]
+        for raw, expected_title, expected_venue in cases:
+            ref = extract_fields(raw, Style.AUTHOR_YEAR)
+            assert ref.title == expected_title
+            assert ref.venue == expected_venue
+
     def test_split_adjacent_web_organization_references_with_period_in_title(self):
         text = (
             "The Hollywood Reporter. Artists Score Major Win in Copyright Case "
