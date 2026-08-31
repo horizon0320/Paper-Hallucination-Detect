@@ -210,23 +210,31 @@ class ArXivAdapter(SourceAdapter):
         seen_ids: set[str] = set()
         candidates: list[Candidate] = []
         async def fetch(query: str) -> None:
-            try:
-                r = await client.get(
-                    _BASE, params={"search_query": query, "max_results": "5"}
-                )
-                if r.status_code != 200:
-                    return
-                root = ET.fromstring(r.text)
-                for entry in root.findall("atom:entry", _NS):
-                    candidate = _entry_to_candidate(entry)
-                    key = candidate.arxiv_id or (candidate.title or "").casefold()
-                    if key and key in seen_ids:
+            for endpoint in _BASE_ALIASES:
+                try:
+                    r = await client.get(
+                        endpoint, params={"search_query": query, "max_results": "5"},
+                        headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
+                    )
+                    if r.status_code != 200:
                         continue
-                    if key:
-                        seen_ids.add(key)
-                    candidates.append(candidate)
-            except (httpx.HTTPError, ET.ParseError):
-                return
+                    root = ET.fromstring(r.text)
+                    entries = root.findall("atom:entry", _NS)
+                    # A 200/empty response can be a transient edge-cache
+                    # result. Let the canonical host have a chance before
+                    # declaring that this query found nothing.
+                    for entry in entries:
+                        candidate = _entry_to_candidate(entry)
+                        key = candidate.arxiv_id or (candidate.title or "").casefold()
+                        if key and key in seen_ids:
+                            continue
+                        if key:
+                            seen_ids.add(key)
+                        candidates.append(candidate)
+                    if entries:
+                        return
+                except (httpx.HTTPError, ET.ParseError):
+                    continue
 
         # Prefer the strict title routes.  Only when both title queries miss
         # do we spend additional requests on the author+keyword route.  This

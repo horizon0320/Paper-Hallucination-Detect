@@ -172,7 +172,12 @@ class DBLPAdapter(SourceAdapter):
                 r = await client.get(endpoint, params=params, follow_redirects=True)
                 if r.status_code == 200:
                     hits = r.json().get("result", {}).get("hits", {}).get("hit", [])
-                    return [_hit_to_candidate(h) for h in hits]
+                    # A proxy/rate-limit layer can return a valid 200 with an
+                    # empty hit list. Do not treat that transient response as
+                    # authoritative; try the alternate endpoint and the
+                    # transport fallbacks below first.
+                    if hits:
+                        return [_hit_to_candidate(h) for h in hits]
             except Exception:
                 continue
         # A few macOS proxy/TLS stacks intermittently raise an SSL record-layer
@@ -189,7 +194,8 @@ class DBLPAdapter(SourceAdapter):
                 r = await fallback_client.get(_BASE, params=params)
                 if r.status_code == 200:
                     hits = r.json().get("result", {}).get("hits", {}).get("hit", [])
-                    return [_hit_to_candidate(h) for h in hits]
+                    if hits:
+                        return [_hit_to_candidate(h) for h in hits]
         except Exception:
             pass
         # Last-resort stdlib transport.  On some macOS builds httpx/OpenSSL
@@ -203,7 +209,8 @@ class DBLPAdapter(SourceAdapter):
             )
             data = json.loads(payload.decode("utf-8", errors="replace"))
             hits = data.get("result", {}).get("hits", {}).get("hit", [])
-            return [_hit_to_candidate(h) for h in hits]
+            if hits:
+                return [_hit_to_candidate(h) for h in hits]
         except Exception:
             pass
         return []

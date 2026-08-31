@@ -253,19 +253,21 @@ class TestArXivAdapter:
           <title>A Robust Method for Certified Model Verification</title>
           <published>2024-01-01T00:00:00Z</published>
         </entry></feed>"""
+        def response(request):
+            query = request.url.params["search_query"]
+            if query.startswith("ti:("):
+                return httpx.Response(200, text=xml)
+            return httpx.Response(200, text='<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"/>')
+
         async with respx.mock:
-            route = respx.get("https://export.arxiv.org/api/query").mock(
-                side_effect=[
-                    httpx.Response(200, text='<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"/>'),
-                    httpx.Response(200, text=xml),
-                ]
-            )
+            route = respx.get("https://export.arxiv.org/api/query").mock(side_effect=response)
+            respx.get("https://arxiv.org/api/query").mock(side_effect=response)
             adapter = ArXivAdapter()
             results = await adapter.search(ref)
             assert len(results) == 1
             assert results[0].arxiv_id == "2401.00001"
             assert route.calls[0].request.url.params["search_query"].startswith('ti:"')
-            assert route.calls[1].request.url.params["search_query"].startswith("ti:(")
+            assert any(call.request.url.params["search_query"].startswith("ti:(") for call in route.calls)
             await adapter.close()
 
     async def test_search_uses_author_and_keyword_route_after_title_miss(self):
@@ -294,6 +296,7 @@ class TestArXivAdapter:
 
         async with respx.mock:
             route = respx.get("https://export.arxiv.org/api/query").mock(side_effect=response)
+            respx.get("https://arxiv.org/api/query").mock(side_effect=response)
             adapter = ArXivAdapter()
             results = await adapter.search(ref)
             assert results and results[0].arxiv_id == "2001.00001"
