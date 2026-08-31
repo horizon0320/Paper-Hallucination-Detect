@@ -12,6 +12,10 @@ from paperaudit.models import Candidate, Reference
 from paperaudit.sources.base import SourceAdapter
 
 _BASE = "https://export.arxiv.org/api/query"
+# arXiv's export host is normally the most reliable API endpoint, but it can
+# intermittently fail TLS negotiation or return an empty response from a
+# regional proxy. Keep the canonical host as a read-only second route.
+_BASE_ALIASES = (_BASE, "https://arxiv.org/api/query")
 _NS = {"atom": "http://www.w3.org/2005/Atom"}
 
 
@@ -125,32 +129,33 @@ class ArXivAdapter(SourceAdapter):
         # responds with transient 429/5xx errors; do not turn one such API
         # hiccup into NOT_FOUND.  Retry a few times with a short backoff before
         # returning no result, while keeping the request budget bounded.
-        for attempt in range(3):
-            try:
-                r = await client.get(
-                    _BASE,
-                    params={"id_list": clean_id, "max_results": "1"},
-                    headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
-                )
-                if r.status_code == 200:
-                    root = ET.fromstring(r.text)
-                    entries = root.findall("atom:entry", _NS)
-                    if entries:
-                        return _entry_to_candidate(entries[0])
-                if r.status_code in {429, 500, 502, 503, 504} and attempt < 2:
-                    retry_after = r.headers.get("Retry-After")
-                    try:
-                        delay = min(float(retry_after), 3.0) if retry_after else 0.75 * (attempt + 1)
-                    except ValueError:
-                        delay = 0.75 * (attempt + 1)
-                    await asyncio.sleep(delay)
-                    continue
-                break
-            except (httpx.HTTPError, ET.ParseError):
-                if attempt < 2:
-                    await asyncio.sleep(0.75 * (attempt + 1))
-                    continue
-                break
+        for endpoint in _BASE_ALIASES:
+            for attempt in range(3):
+                try:
+                    r = await client.get(
+                        endpoint,
+                        params={"id_list": clean_id, "max_results": "1"},
+                        headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
+                    )
+                    if r.status_code == 200:
+                        root = ET.fromstring(r.text)
+                        entries = root.findall("atom:entry", _NS)
+                        if entries:
+                            return _entry_to_candidate(entries[0])
+                    if r.status_code in {429, 500, 502, 503, 504} and attempt < 2:
+                        retry_after = r.headers.get("Retry-After")
+                        try:
+                            delay = min(float(retry_after), 3.0) if retry_after else 0.75 * (attempt + 1)
+                        except ValueError:
+                            delay = 0.75 * (attempt + 1)
+                        await asyncio.sleep(delay)
+                        continue
+                    break
+                except (httpx.HTTPError, ET.ParseError):
+                    if attempt < 2:
+                        await asyncio.sleep(0.75 * (attempt + 1))
+                        continue
+                    break
         return None
 
     async def search(self, ref: Reference) -> list[Candidate]:
