@@ -114,18 +114,31 @@ class CrossrefAdapter(SourceAdapter):
         if not ref.title:
             return []
         client = await self._get_client()
-        params = {
+        # Search by title independently first.  Author strings extracted from
+        # a PDF can be hallucinated, truncated, or belong to another version;
+        # putting them in Crossref's query would filter out the correct record
+        # before the record-linkage scorer gets a chance to flag the mismatch.
+        title_params = {
             **self._mailto_params(),
             "query.title": unicodedata.normalize("NFKC", ref.title),
             "rows": "5",
         }
+        params_list = [title_params]
+        # Author-constrained search remains useful as a second route for
+        # short/ambiguous titles, but it must never replace the title-only
+        # route.
         if ref.authors:
-            params["query.author"] = " ".join(ref.authors[:2])
-        try:
-            r = await client.get(f"{_BASE}/works", params=params)
-            if r.status_code == 200:
-                items = r.json().get("message", {}).get("items", [])
-                return [_item_to_candidate(i) for i in items]
-        except httpx.HTTPError:
-            pass
+            params_list.append({
+                **title_params,
+                "query.author": " ".join(ref.authors[:2]),
+            })
+        for params in params_list:
+            try:
+                r = await client.get(f"{_BASE}/works", params=params)
+                if r.status_code == 200:
+                    items = r.json().get("message", {}).get("items", [])
+                    if items:
+                        return [_item_to_candidate(i) for i in items]
+            except httpx.HTTPError:
+                continue
         return []

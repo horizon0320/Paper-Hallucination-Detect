@@ -115,6 +115,36 @@ class TestCrossrefAdapter:
             assert cand.year == 2017
             await adapter.close()
 
+    async def test_search_title_route_survives_wrong_authors(self):
+        ref = Reference(
+            title="Coverage: A novel database for copy-move forgery detection",
+            authors=["David Cozzolino", "Justus Thies"],
+            year=2016,
+        )
+        item = {
+            "DOI": "10.1109/ICIP.2016.7532339",
+            "title": ["COVERAGE: A novel database for copy-move forgery detection"],
+            "author": [
+                {"given": "Bihan", "family": "Wen"},
+                {"given": "Ye", "family": "Zhu"},
+            ],
+            "published": {"date-parts": [[2016]]},
+            "container-title": ["2016 IEEE International Conference on Image Processing (ICIP)"],
+        }
+
+        def response(request):
+            # The first request must be title-only; wrong cited authors should
+            # not prevent the exact title from being returned.
+            assert "query.author" not in request.url.params
+            return httpx.Response(200, json={"message": {"items": [item]}})
+
+        async with respx.mock:
+            respx.get("https://api.crossref.org/works").mock(side_effect=response)
+            adapter = CrossrefAdapter()
+            results = await adapter.search(ref)
+            assert results and results[0].doi == "10.1109/ICIP.2016.7532339"
+            await adapter.close()
+
 
 @pytest.mark.asyncio
 class TestWebPageAdapter:
