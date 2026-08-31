@@ -309,6 +309,18 @@ Next Author and Another Author. A second paper. In Conference, 2023.
             ref = extract_fields(raw, Style.AUTHOR_YEAR)
             assert ref.title == expected
 
+    def test_author_year_stops_ieee_transactions_volume_pages_before_arxiv(self):
+        raw = (
+            "Xiaohong Liu. Pscc-net: Progressive spatio-channel correlation network "
+            "for image manipulation detection and localization. IEEE Transactions on "
+            "Circuits and Systems for Video Technology, 32 (11):7505–7517, 2022. "
+            "arXiv:2103.10596."
+        )
+        ref = extract_fields(raw, Style.AUTHOR_YEAR)
+        assert ref.title == "Pscc-net: Progressive spatio-channel correlation network for image manipulation detection and localization"
+        assert ref.authors == ["Xiaohong Liu"]
+        assert ref.arxiv_id == "2103.10596"
+
     def test_split_adjacent_web_organization_references_with_period_in_title(self):
         text = (
             "The Hollywood Reporter. Artists Score Major Win in Copyright Case "

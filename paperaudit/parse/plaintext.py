@@ -1167,8 +1167,12 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
             r"In\s+(?:The\s+)?(?:[A-Z][A-Za-z-]*\s+){0,4}International\b|"
             r"In\s+\d+(?:st|nd|rd|th)\b|"
             r"(?:19|20)\d{2}\s+\d+(?:st|nd|rd|th)\s+International\b|"
-            r"Advances\s+in|Under\s+review|Transactions\s+of|ACM\s+Computing|"
-            r"Journal\s+of\b|Foundations\s+and\s+Trends\b|Center\s+for\b|"
+            r"Advances\s+in|Under\s+review|(?:IEEE\s+)?Transactions\s+(?:of|on)\b|"
+            r"(?:IEEE\s+)?Journal\s+of\b|ACM\s+Computing|Foundations\s+and\s+Trends\b|Center\s+for\b|"
+            # IEEE journal citations often append volume/issue/pages without
+            # a leading ``Journal of`` marker (e.g. ``IEEE Transactions ...,
+            # 32 (11):7505-7517``). Stop the title before that carrier text.
+            r",\s*\d{1,4}\s*\(\s*\d{1,4}\s*\)\s*[:;,]\s*\d{1,6}(?:[-–]\d{1,6})?\b|"
             r"LongCat\s+LLM|Zenodo|URL\b|https?://|;\s+https?://))",
         rest,
         re.IGNORECASE,
