@@ -6,7 +6,7 @@ Paper-audit 用于检查论文参考文献是否能够在学术数据库中找�
 
 ### 安装
 
-需要 Python 3.10 或更高版本：
+需要 Python 3.9 或更高版本：
 
 ```bash
 git clone https://github.com/horizon0320/Paper-audit.git
@@ -77,7 +77,7 @@ HTML 报告会列出原始引用、搜索到的记录、字段对照和各信源
 
 ## 环境要求
 
-- Python 3.10+
+- Python 3.9+
 - 可访问学术数据库接口的网络环境
 - PDF 输入需要 PyMuPDF（安装项目依赖时会自动安装）
 
