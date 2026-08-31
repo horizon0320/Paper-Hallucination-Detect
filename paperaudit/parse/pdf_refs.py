@@ -103,7 +103,7 @@ _RUNNING_BIB_HEADER_RE = re.compile(
 _POST_BIB_CONTENT_RE = re.compile(
     r"^\s*(?:Publisher[’']?s\s+note|Open\s+Access|©\s*(?:The\s+Author|THE\s+AUTHOR)|"
     r"Acknowledgements?|Author\s+contributions?|Competing\s+interests?|Additional\s+information|"
-    r"Supplementary\s+information|Correspondence\s+and\s+requests|Peer\s+review\s+information|"
+    r"Supplementary\s+(?:information|material)|Correspondence\s+and\s+requests|Peer\s+review\s+information|"
     r"Reprints\s+and\s+permissions)\b",
     re.IGNORECASE,
 )

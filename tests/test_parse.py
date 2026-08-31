@@ -185,6 +185,26 @@ arXiv preprint arXiv:2307.09288.
         )
         assert ref.authors[-1] == "Yossi Matias"
 
+    def test_aaai_semicolon_author_blocks_are_rejoined(self):
+        # A two-column AAAI PDF may cut an author list at the column boundary;
+        # the continuation starts with an initial (``G.;``), not a new record.
+        text = """\
+Cheng, B.; Misra, I.; Schwing, A.
+
+G.; Kirillov, A.; and Girdhar, R. 2022. Masked-attention Mask Transformer
+for Universal Image Segmentation. In CVPR.
+
+Zhang, R.; Hu, X.; Li, B.; Huang, S.; Deng, H.; Li, H.; Qiao, Y.; and
+Gao, P. 2023. Prompt, Generate, then Cache: Cascade of Foundation Models
+makes Strong Few-shot Learners. arXiv preprint arXiv:2303.02151.
+"""
+        refs = parse_plaintext(text)
+        assert len(refs) == 2
+        assert refs[0].title == "Masked-attention Mask Transformer for Universal Image Segmentation"
+        assert refs[0].authors[-1] == "Girdhar, R"
+        assert refs[1].title == "Prompt, Generate, then Cache: Cascade of Foundation Models makes Strong Few-shot Learners"
+        assert refs[1].year == 2023
+
     def test_extract_single_author_title_after_period(self):
         ref = extract_fields(
             "Lei Su. Can we get rid of handcrafted feature extractors? "

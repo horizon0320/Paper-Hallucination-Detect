@@ -46,7 +46,11 @@ def _citation_year_matches(chunk: str) -> list[re.Match[str]]:
     for match in _YEAR_RE.finditer(chunk):
         before = chunk[max(0, match.start() - 12):match.start()]
         after = chunk[match.end():match.end() + 3]
-        if re.search(r"\bpp?\.?\s*$", before, re.IGNORECASE):
+        # A capitalized author initial (``... and Gao, P. 2023``) can look
+        # like the page abbreviation ``p.``. Only discard lowercase page
+        # markers here; this preserves the final author's initial in AAAI
+        # semicolon-style records.
+        if re.search(r"\bpp?\.?\s*$", before):
             continue
         if re.match(r"\s*[-–—]", after) or re.search(r"[-–—]\s*$", before):
             continue
@@ -119,13 +123,17 @@ def split(text: str) -> list[str]:
     # blocks. Prefer those explicit boundaries when they are plentiful; this
     # is especially important for ACL/EMNLP two-column references where a
     # wrapped author line can otherwise be mistaken for a new entry.
-    strategies = [_split_numbered]
+    # The semicolon-author strategy already returns one complete record per
+    # chunk. Running the generic embedded-reference pass afterward would
+    # incorrectly split initials such as ``A. G.; Kirillov`` at the period.
+    strategies = [(_split_numbered, True), (_split_semicolon_author_year, False)]
     if sum(1 for line in lines if not line.strip()) >= 2:
-        strategies.append(_split_blank_lines)
-    strategies.extend([_split_author_year, _split_hanging_indent])
-    for strategy in strategies:
+        strategies.append((_split_blank_lines, True))
+    strategies.extend([(_split_author_year, True), (_split_hanging_indent, True)])
+    for strategy, apply_embedded_split in strategies:
         chunks = strategy(lines)
-        chunks = _split_embedded_organization_refs(chunks)
+        if apply_embedded_split:
+            chunks = _split_embedded_organization_refs(chunks)
         # PDF extraction may place an entry's author list on one line and its
         # title on the next line.  The author-only line can look like a new
         # author-year entry to the boundary heuristic, leaving a bogus
@@ -143,6 +151,71 @@ def split(text: str) -> list[str]:
     embedded = _split_embedded_organization_refs([text])
     cleaned = [_cleanup_chunk(c) for c in embedded if _cleanup_chunk(c)]
     return [c for c in cleaned if c]
+
+
+def _split_semicolon_author_year(lines: list[str]) -> list[str]:
+    """Split semicolon-delimited author-year bibliographies across PDF blocks.
+
+    AAAI-style references use semicolons between authors, but a two-column
+    PDF can cut a single author list at the column boundary (for example,
+    ``Cheng, B.; Misra, I.; Schwing, A.`` followed by ``G.; Kirillov, A.``).
+    Treating every text block as an independent record then creates bogus
+    author-only entries.  Instead, flatten the lines and locate only genuine
+    sentence starts whose first surname is followed by a semicolon-delimited
+    author list and a publication year.  Initial-only continuation fragments
+    such as ``G.; Kirillov`` are explicitly excluded.
+    """
+    if not lines:
+        return []
+    value = " ".join(line.strip() for line in lines if line.strip())
+    if not value:
+        return []
+
+    # Require a semicolon before the year so this path is limited to the
+    # target citation style rather than natural-name/APA references.
+    candidate_re = re.compile(
+        r"(?:^|(?<=\.\s))"
+        r"(?P<author>(?:(?:de|da|del|dos|van|von|e)\s+)?"
+        r"[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’\-]{1,60},\s*)"
+    )
+    starts: list[int] = []
+    for match in candidate_re.finditer(value):
+        start = match.start("author")
+        # ``G.; Kirillov`` and similar fragments begin after an initial plus
+        # semicolon, not at a new surname.  A real reference start is not
+        # immediately preceded by that continuation shape.
+        if re.search(r"[A-ZÀ-ÿ]\.;\s*$", value[:start]):
+            continue
+        # AAAI author lists place initials immediately after the surname
+        # comma (``Carvalho, O.``).  Requiring that shape avoids mistaking a
+        # title sentence such as ``Prompt, Generate, then Cache`` for a new
+        # bibliography record.
+        after_comma = value[match.end():].lstrip()
+        if not re.match(r"[A-Z](?:[.\-A-Z]*\.)", after_comma):
+            continue
+        window = value[start:start + 420]
+        year_match = re.search(r"\b(?:19|20)\d{2}[a-z]?\.", window, re.IGNORECASE)
+        if not year_match:
+            continue
+        author_window = window[:year_match.end()]
+        if ";" not in author_window and not re.search(r"\band\b", author_window, re.IGNORECASE):
+            continue
+        starts.append(start)
+
+    year_count = len(re.findall(r"\b(?:19|20)\d{2}[a-z]?\.", value, re.IGNORECASE))
+    # Do not take over mixed/natural author-year text merely because its first
+    # two entries happen to use semicolons.  In a genuine AAAI bibliography,
+    # nearly every publication-year marker belongs to one semicolon author
+    # record; a mixed sample has a noticeably lower coverage.
+    if len(starts) < 2 or (year_count >= 3 and len(starts) * 100 < year_count * 70):
+        return []
+    chunks: list[str] = []
+    for index, start in enumerate(starts):
+        end = starts[index + 1] if index + 1 < len(starts) else len(value)
+        chunk = value[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+    return chunks if len(chunks) >= 2 else []
 
 
 def _split_embedded_organization_refs(chunks: list[str]) -> list[str]:
@@ -1089,7 +1162,7 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
     # Stop the title at common venue/metadata markers; otherwise use the first
     # sentence boundary. This keeps search queries focused on the work title.
     venue_markers = re.search(
-        r"\s+(?=(?:arXiv\s+preprint|Preprint\s+at|In\s+Proceedings|In\s+Advances\s+in|"
+            r"\s+(?=(?:arXiv\s*(?:preprint|:)|Preprint\s+at|In\s+Proceedings|In\s+Advances\s+in|"
             r"In\s+(?:The\s+)?(?:[A-Z][A-Za-z-]*\s+){0,4}International\b|"
             r"In\s+\d+(?:st|nd|rd|th)\b|"
             r"(?:19|20)\d{2}\s+\d+(?:st|nd|rd|th)\s+International\b|"
