@@ -339,6 +339,30 @@ Next Author and Another Author. A second paper. In Conference, 2023.
             assert ref.title == expected_title
             assert ref.venue == expected_venue
 
+    def test_author_year_parses_no_date_marker(self):
+        raw = (
+            "Nicholas Carlini, Daphne Ippolito, Matthew Jagielski, Katherine Lee, "
+            "Florian Tramer, and Chiyuan Zhang. [n. d.]. Quantifying memorization "
+            "across neural language models. In The Eleventh International Conference "
+            "on Learning Representations."
+        )
+        ref = extract_fields(raw, detect_style([raw]))
+        assert ref.title == "Quantifying memorization across neural language models"
+        assert ref.authors[:2] == ["Nicholas Carlini", "Daphne Ippolito"]
+        assert ref.year is None
+        assert ref.venue == "In The Eleventh International Conference on Learning Representations"
+
+    def test_author_year_parses_no_date_marker_with_middle_initials(self):
+        raw = (
+            "Edward J Hu, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, "
+            "Lu Wang, Weizhu Chen, et al. [n. d.]. LoRA: Low-Rank Adaptation of Large "
+            "Language Models. In International Conference on Learning Representations."
+        )
+        ref = extract_fields(raw, Style.UNKNOWN)
+        assert ref.title == "LoRA: Low-Rank Adaptation of Large Language Models"
+        assert len(ref.authors) == 7
+        assert ref.year is None
+
     def test_split_adjacent_web_organization_references_with_period_in_title(self):
         text = (
             "The Hollywood Reporter. Artists Score Major Win in Copyright Case "

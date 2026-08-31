@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 _DOI_RE = re.compile(r"10\.\d{4,}/\S+")
 _URL_RE = re.compile(r"https?://[^\s,;>\"')]+")
 _YEAR_RE = re.compile(r"\b((?:19|20)\d{2})(?:[a-z])?\b", re.IGNORECASE)
+_NO_DATE_RE = re.compile(r"(?:\[\s*n\.\s*d\.\s*\]|\bn\.\s*d\.)", re.IGNORECASE)
 _PUBLISHER_YEAR_TAIL_RE = re.compile(
     r"^(?:IEEE(?:\s+Computer\s+Society)?|ACM|Springer(?:\s+Nature)?|Elsevier|Wiley),\s*"
     r"(?:19|20)\d{2}[a-z]?\.$", re.IGNORECASE
@@ -66,7 +67,7 @@ _AUTHOR_YEAR_RE = re.compile(
     # Allow multi-word surnames ("Van Swol", "Da San Martino") and
     # semicolon-separated author lists used by AAAI proceedings.
     r"^\s*(?:[A-Z][a-zA-ZÀ-ÿ\-\'’]+\s+)*[A-Z][a-zA-ZÀ-ÿ\-\'’]+,\s*[^0-9\n]{0,180}"
-    r"(?<!\()\b(?:(?:19|20)\d{2}[a-z]?\b|\[\s*n\.\s*d\.\s*\])"
+    r"(?<!\()(?:\b(?:19|20)\d{2}[a-z]?\b|\[\s*n\.\s*d\.\s*\])"
     r"\s*[.\,:)]"
 )
 
@@ -718,7 +719,11 @@ def _looks_like_plain_author_year_chunk(chunk: str) -> bool:
     """Style-detection variant that rejects APA/IEEE year and quote syntax."""
     if any(mark in chunk for mark in ('"', "'", '“', '”')):
         return False
-    year = re.search(r"(?<!\()\b(?:19|20)\d{2}[a-z]?\b", chunk, re.IGNORECASE)
+    year = re.search(
+        r"(?<!\()\b(?:19|20)\d{2}[a-z]?\b|\[\s*n\.\s*d\.\s*\]|\bn\.\s*d\.",
+        chunk,
+        re.IGNORECASE,
+    )
     if not year or (year.start() > 0 and chunk[year.start() - 1] == '('):
         return False
     prefix = chunk[:year.start()]
@@ -745,7 +750,7 @@ def detect_style(chunks: list[str]) -> Style:
 
     for chunk in samples:
         group_author_year = bool(
-            re.match(r"^(.+?)\.\s+.+\b(?:19|20)\d{2}\b", chunk)
+            re.match(r"^(.+?)\.\s+.+(?:\b(?:19|20)\d{2}\b|\[\s*n\.\s*d\.\s*\])", chunk)
             and _looks_like_group_author(chunk.split(". ", 1)[0])
         )
         if _AUTHOR_YEAR_RE.match(chunk) or _looks_like_plain_author_year_chunk(chunk) or group_author_year:
@@ -788,6 +793,19 @@ def detect_style(chunks: list[str]) -> Style:
 
 def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
     chunk = _normalize_pdf_text(chunk)
+    # A global style vote can be inconclusive when only one entry is supplied
+    # (or when a small bibliography mixes numeric years with ``[n.d.]``). Use
+    # the per-entry author/date signature as a safe local override so the
+    # author/title boundary is still parsed correctly.
+    if style == Style.UNKNOWN and (
+        _AUTHOR_YEAR_RE.match(chunk)
+        or (
+            _NO_DATE_RE.search(chunk)
+            and re.match(r"^\s*.+\.\s+\[?\s*n\.\s*d\.", chunk, re.IGNORECASE)
+            and ("," in chunk.split("[", 1)[0] or re.search(r"\band\b", chunk.split("[", 1)[0], re.IGNORECASE))
+        )
+    ):
+        style = Style.AUTHOR_YEAR
     # PDF text extraction may insert spaces into URL punctuation (``https: //``
     # or ``arxiv. org``). Normalize those artifacts before identifier and URL
     # detection so preprint records remain resolvable.
@@ -938,6 +956,11 @@ def _normalize_compact_title(value: str | None) -> str | None:
             return token
         if any(ch in token for ch in "/-0123456789"):
             return token
+        # Preserve conventional all-caps/mixed-case acronyms such as LoRA,
+        # OpenCLIP, PSCC and BERT. A normal concatenated phrase such as
+        # ``NuminaMath`` has only one internal capital and remains splittable.
+        if sum(ch.isupper() for ch in token) >= 2:
+            return token
         return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", token)
 
     value = re.sub(r"\S+", split_camel_token, value)
@@ -1065,7 +1088,14 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
     if org_url:
         return None, _parse_author_list(org_url.group("org")), None
 
-    year_m = re.search(r"\b((?:19|20)\d{2})(?:[a-z])?\b", chunk, re.IGNORECASE)
+    # ACL/EMNLP references may use ``[n.d.]``/``n.d.`` instead of a numeric
+    # publication year. Treat that token as the same author/title boundary,
+    # while leaving ``Reference.year`` as unknown (None).
+    year_m = re.search(
+        r"\b((?:19|20)\d{2})(?:[a-z])?\b|\[\s*n\.\s*d\.\s*\]|\bn\.\s*d\.",
+        chunk,
+        re.IGNORECASE,
+    )
     if not year_m:
         return _extract_generic(chunk)[0], [], None
 
