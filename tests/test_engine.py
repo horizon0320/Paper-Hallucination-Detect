@@ -138,6 +138,29 @@ class TestEngine:
             assert all(r.overall_verdict == Verdict.NOT_FOUND for r in reports)
             await adapter.close()
 
+    async def test_verify_many_reports_progress_and_preserves_order(self):
+        refs = [Reference(title="First paper"), Reference(title="Second paper")]
+        completed = []
+
+        class EmptyAdapter:
+            name = "empty"
+
+            async def lookup_doi(self, doi):
+                return None
+
+            async def search(self, ref):
+                await __import__("asyncio").sleep(0)
+                return []
+
+        reports = await verify_many(
+            refs,
+            self._opts(sources=[EmptyAdapter()]),
+            progress_callback=lambda done, total, report: completed.append((done, total, report.reference.title)),
+        )
+        assert [report.reference.title for report in reports] == ["First paper", "Second paper"]
+        assert sorted(done for done, _total, _title in completed) == [1, 2]
+        assert all(total == 2 for _done, total, _title in completed)
+
     async def test_verdict_display_not_found_no_fake(self):
         ref = Reference(title="fake paper", authors=["nobody"], year=2099)
         async with respx.mock:

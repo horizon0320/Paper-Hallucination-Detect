@@ -55,6 +55,16 @@ paperaudit check paper.pdf --format html
 该命令会同时保存 `outputs/<文件名>_paperaudit_basic.json` 和
 `outputs/<文件名>_paperaudit_basic_report.html`，并在终端打印文件路径。
 
+### 浏览器上传页面
+
+如果希望在网页中选择 PDF 并查看进度条：
+
+```bash
+paper-audit-web
+```
+
+然后打开 <http://127.0.0.1:8765>。上传和验证都在本机进行；任务完成后页面会直接提供 HTML 报告链接。
+
 ## 当前功能
 
 - 从 PDF 自动识别参考文献区域，支持双栏排版和跨页文献。

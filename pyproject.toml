@@ -39,6 +39,7 @@ dev = [
 
 [project.scripts]
 paperaudit = "paperaudit.cli:app"
+paper-audit-web = "paperaudit.webapp:main"
 
 [tool.hatch.build.targets.wheel]
 # The report renderer is imported by ``paperaudit check --format html`` and

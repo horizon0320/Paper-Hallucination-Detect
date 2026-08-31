@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Sequence
+from typing import Callable, Sequence
 
 from paperaudit.checks.existence import check_existence
 from paperaudit.checks.relevance import check_relevance
@@ -129,6 +129,7 @@ async def verify_one(ref: Reference, opts: VerifyOptions) -> VerificationReport:
 async def verify_many(
     refs: Sequence[Reference],
     opts: VerifyOptions,
+    progress_callback: Callable[[int, int, VerificationReport], None] | None = None,
 ) -> list[VerificationReport]:
     semaphore = asyncio.Semaphore(opts.concurrency)
 
@@ -136,5 +137,17 @@ async def verify_many(
         async with semaphore:
             return await verify_one(ref, opts)
 
-    tasks = [_bounded(ref) for ref in refs]
-    return await asyncio.gather(*tasks)
+    async def _indexed(index: int, ref: Reference) -> tuple[int, VerificationReport]:
+        return index, await _bounded(ref)
+
+    tasks = [asyncio.create_task(_indexed(index, ref)) for index, ref in enumerate(refs)]
+    results: list[VerificationReport | None] = [None] * len(tasks)
+    total = len(tasks)
+    completed = 0
+    for task in asyncio.as_completed(tasks):
+        index, report = await task
+        results[index] = report
+        completed += 1
+        if progress_callback is not None:
+            progress_callback(completed, total, report)
+    return [report for report in results if report is not None]
