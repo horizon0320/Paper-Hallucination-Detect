@@ -46,6 +46,15 @@ paperaudit check paper.pdf --format json > result.json
 paperaudit check paper.pdf --format md > report.md
 ```
 
+如果希望验证后直接生成网页报告，只需一条命令：
+
+```bash
+paperaudit check paper.pdf --format html
+```
+
+该命令会同时保存 `outputs/<文件名>_paperaudit_basic.json` 和
+`outputs/<文件名>_paperaudit_basic_report.html`，并在终端打印文件路径。
+
 ## 当前功能
 
 - 从 PDF 自动识别参考文献区域，支持双栏排版和跨页文献。

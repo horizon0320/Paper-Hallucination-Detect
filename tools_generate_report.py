@@ -318,7 +318,18 @@ def comparison_row(label: str, cited: object, found: object, different: bool, st
             f'<div class="comparison-status">{status}</div></div>')
 
 
-def main() -> None:
+def generate_report(json_path: str | Path | None = None) -> Path:
+    """Generate an HTML report from a Paper-audit JSON artifact.
+
+    The function is intentionally importable so the CLI can provide a true
+    one-command ``--format html`` workflow.  ``json_path`` may be absolute or
+    relative to the project's ``outputs`` directory.
+    """
+    global JSON_PATH, OUT_PATH
+    if json_path is not None:
+        candidate = Path(json_path)
+        JSON_PATH = candidate if candidate.is_absolute() else ROOT / 'outputs' / candidate
+        OUT_PATH = JSON_PATH.with_name(JSON_PATH.stem + '_report.html')
     raw = JSON_PATH.read_text()
     data = json.loads(raw[raw.find('['):])
     for item in data:
@@ -540,7 +551,12 @@ def main() -> None:
 <footer>验证结果文件：{esc(JSON_PATH.name)} · Paper-audit 本地修改版 · 仅基础存在性验证</footer>
 </main></body></html>'''
     OUT_PATH.write_text(html_doc)
-    print(OUT_PATH)
+    return OUT_PATH
+
+
+def main() -> None:
+    out_path = generate_report()
+    print(out_path)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -177,10 +178,30 @@ def _render_md(reports: list[VerificationReport]) -> str:
     return "\n".join(lines)
 
 
+def _json_artifact_path(input_file: str) -> Path:
+    """Return the stable JSON artifact path used by HTML report generation."""
+    if input_file == "-":
+        stem = "stdin"
+    else:
+        stem = Path(input_file).stem or "paper"
+    return Path("outputs") / f"{stem}_paperaudit_basic.json"
+
+
+def _generate_html_report(json_path: Path) -> Path:
+    """Load the bundled renderer without depending on the caller's cwd."""
+    renderer_path = Path(__file__).resolve().parent.parent / "tools_generate_report.py"
+    spec = importlib.util.spec_from_file_location("paperaudit_report_renderer", renderer_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"HTML report renderer not found: {renderer_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.generate_report(json_path)
+
+
 @app.command("check")
 def check_cmd(
     file: str = typer.Argument(..., help="Reference file or '-' for stdin"),
-    format: str = typer.Option("table", "--format", "-f", help="Output format: table, json, md"),
+    format: str = typer.Option("table", "--format", "-f", help="Output format: table, json, md, html"),
     check_relevance: bool = typer.Option(False, "--enable-llm/--no-llm", help="启用 LLM 内容相关性检查（默认关闭）"),
     check_url: bool = typer.Option(False, "--url/--no-url", help="启用 URL 存活检查（默认关闭）"),
     llm_provider: Optional[str] = typer.Option(None, "--llm", "--llm-provider", "--provider", help="LLM provider: auto, deepseek, ollama, none"),
@@ -227,12 +248,23 @@ def check_cmd(
     err_console.print(f"[dim]Parsed {len(refs)} reference(s). Checking...[/dim]")
     reports = asyncio.run(_run())
 
+    format = format.lower()
     if format == "json":
         print(json.dumps([r.model_dump(mode="json") for r in reports], indent=2))
     elif format == "md":
         print(_render_md(reports))
-    else:
+    elif format == "html":
+        json_path = _json_artifact_path(file).resolve()
+        json_path.parent.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(json.dumps([r.model_dump(mode="json") for r in reports], ensure_ascii=False, indent=2) + "\n")
+        html_path = _generate_html_report(json_path)
+        print(f"JSON: {json_path}")
+        print(f"HTML: {html_path}")
+    elif format == "table":
         _render_table(reports)
+    else:
+        err_console.print(f"[red]Unsupported output format: {format}. Choose table, json, md, or html.[/red]")
+        raise typer.Exit(2)
 
     bad_verdicts = {Verdict.NOT_FOUND, Verdict.DEAD_URL}
     if any(r.overall_verdict in bad_verdicts for r in reports):

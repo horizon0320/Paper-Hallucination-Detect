@@ -36,6 +36,11 @@ dev = [
 [project.scripts]
 paperaudit = "paperaudit.cli:app"
 
+[tool.hatch.build.targets.wheel]
+# The report renderer is imported by ``paperaudit check --format html`` and
+# must therefore be present in installed (non-editable) builds as well.
+include = ["paperaudit/**", "tools_generate_report.py"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
