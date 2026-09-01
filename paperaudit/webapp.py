@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 REPORT_DIR = ROOT / "outputs"
 UPLOAD_DIR = REPORT_DIR / ".web_uploads"
 INDEX_PATH = Path(__file__).resolve().parent / "web" / "index.html"
+DEMO_PATH = Path(__file__).resolve().parent / "web" / "demo.html"
 JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
 
@@ -152,6 +153,9 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/":
             self._send_bytes(INDEX_PATH.read_bytes(), "text/html; charset=utf-8")
+            return
+        if parsed.path == "/demo":
+            self._send_bytes(DEMO_PATH.read_bytes(), "text/html; charset=utf-8")
             return
         if parsed.path.startswith("/api/jobs/"):
             job = _get_job(unquote(parsed.path.rsplit("/", 1)[-1]))
