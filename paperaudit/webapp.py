@@ -135,6 +135,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
         self.wfile.write(body)
 
@@ -190,6 +193,13 @@ class Handler(BaseHTTPRequestHandler):
         _set_job(job_id, phase="queued", progress=0, completed=0, total=0, message="任务已加入队列")
         threading.Thread(target=_run_job, args=(job_id, input_path, stem), daemon=True).start()
         self._send_json({"job_id": job_id}, HTTPStatus.ACCEPTED)
+
+    def do_OPTIONS(self) -> None:  # noqa: N802 - stdlib handler API
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
 
     def log_message(self, _format: str, *_args: object) -> None:
         return
