@@ -27,6 +27,7 @@ from paperaudit.parse.detect import auto_parse
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORT_DIR = ROOT / "outputs"
+EXTRA_REPORT_DIRS = (REPORT_DIR, ROOT.parent / "outputs")
 UPLOAD_DIR = REPORT_DIR / ".web_uploads"
 INDEX_PATH = Path(__file__).resolve().parent / "web" / "index.html"
 DEMO_PATH = Path(__file__).resolve().parent / "web" / "demo.html"
@@ -163,11 +164,12 @@ class Handler(BaseHTTPRequestHandler):
             return
         if parsed.path.startswith("/reports/"):
             name = Path(unquote(parsed.path.rsplit("/", 1)[-1])).name
-            target = REPORT_DIR / name
-            if target.is_file() and target.suffix in {".html", ".json"}:
-                content_type = "text/html; charset=utf-8" if target.suffix == ".html" else "application/json"
-                self._send_bytes(target.read_bytes(), content_type)
-                return
+            for report_dir in EXTRA_REPORT_DIRS:
+                target = report_dir / name
+                if target.is_file() and target.suffix in {".html", ".json"}:
+                    content_type = "text/html; charset=utf-8" if target.suffix == ".html" else "application/json"
+                    self._send_bytes(target.read_bytes(), content_type)
+                    return
         self._send_json({"error": "not found"}, 404)
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler API
