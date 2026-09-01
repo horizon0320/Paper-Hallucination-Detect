@@ -118,6 +118,20 @@ class TestPlaintext:
         chunks = split(text)
         assert len(chunks) == 5
 
+    def test_split_numbered_keeps_acm_publisher_and_editor_continuations(self):
+        text = (
+            "[35] Long Ouyang, Jeff Wu, Xu Jiang. 2022. Training language models. "
+            "In Proceedings of NeurIPS. Curran Associates Inc., Red Hook, NY, USA, "
+            "Article 2011, 15 pages.\n"
+            "[36] Xiangyu Qi, Ashwinee Panda, Kaifeng Lyu. 2025. Safety Alignment. "
+            "In International Conference on Learning Representations, Y. Yue, A. Garg, "
+            "N. Peng, and R. Yu (Eds.), Vol. 2025. 54911–54941."
+        )
+        chunks = split(text)
+        assert len(chunks) == 2
+        assert "Curran Associates Inc." in chunks[0]
+        assert "Y. Yue" in chunks[1]
+
     def test_split_blank_lines_apa(self):
         text = (FIXTURES / "apa_style.txt").read_text()
         chunks = split(text)

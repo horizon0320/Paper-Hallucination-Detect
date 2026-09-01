@@ -127,7 +127,11 @@ def split(text: str) -> list[str]:
     # The semicolon-author strategy already returns one complete record per
     # chunk. Running the generic embedded-reference pass afterward would
     # incorrectly split initials such as ``A. G.; Kirillov`` at the period.
-    strategies = [(_split_numbered, True), (_split_semicolon_author_year, False)]
+    # Explicit numbered markers are authoritative boundaries. Do not run the
+    # embedded organization splitter on these chunks: ACM/IEEE records often
+    # contain publisher names, editor lists, volume labels, or URLs that look
+    # like a second author/reference and would create phantom entries.
+    strategies = [(_split_numbered, False), (_split_semicolon_author_year, False)]
     if sum(1 for line in lines if not line.strip()) >= 2:
         strategies.append((_split_blank_lines, True))
     strategies.extend([(_split_author_year, True), (_split_hanging_indent, True)])
