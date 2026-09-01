@@ -323,6 +323,31 @@ Next Author and Another Author. A second paper. In Conference, 2023.
             ref = extract_fields(raw, Style.AUTHOR_YEAR)
             assert ref.title == expected
 
+    def test_author_year_stops_named_venue_without_truncating_title(self):
+        cases = [
+            (
+                "Nicholas Carlini, Florian Tramer, Eric Wallace, and Colin Raffel. 2020. "
+                "Extracting Training Data from Large Language Models. In USENIX Security Symposium. "
+                "https://example.org/paper",
+                "Extracting Training Data from Large Language Models",
+            ),
+            (
+                "Parjanya Prashant, Kaustubh Ponkshe, and Babak Salimi. 2025. "
+                "TokenSwap: A Lightweight Method to Disrupt Memorized Sequences in LLMs. "
+                "In The Thirty-ninth Annual Conference on Neural Information Processing Systems.",
+                "TokenSwap: A Lightweight Method to Disrupt Memorized Sequences in LLMs",
+            ),
+            (
+                "Bonan Min, Hayley Ross, Elior Sulem, and Dan Roth. 2023. Recent advances in "
+                "natural language processing via large pre-trained language models: A survey. "
+                "Comput. Surveys 56, 2 (2023), 1–40.",
+                "Recent advances in natural language processing via large pre-trained language models: A survey",
+            ),
+        ]
+        for raw, expected in cases:
+            ref = extract_fields(raw, Style.AUTHOR_YEAR)
+            assert ref.title == expected
+
     def test_author_year_stops_ieee_transactions_volume_pages_before_arxiv(self):
         raw = (
             "Xiaohong Liu. Pscc-net: Progressive spatio-channel correlation network "

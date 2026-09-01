@@ -1199,10 +1199,14 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
     venue_markers = re.search(
             r"\s+(?=(?:arXiv\s*(?:preprint|:)|Preprint\s+at|In\s+Proceedings|In\s+Advances\s+in|"
             r"In\s+(?:The\s+)?(?:[A-Z][A-Za-z-]*\s+){0,4}International\b|"
+            r"In\s+(?:The\s+)?(?:USENIX|NeurIPS|NIPS|ICLR|ICML|CVPR|ICCV|ECCV|ACL|EMNLP|NAACL|"
+            r"AAAI|IJCAI|WACV|NDSS|SIGMOD|KDD|ICSE|FSE|PLDI|POPL|SOSP|OSDI)\b|"
             r"In\s+\d+(?:st|nd|rd|th)\b|"
             r"(?:19|20)\d{2}\s+\d+(?:st|nd|rd|th)\s+International\b|"
-            r"Advances\s+in|Under\s+review|(?:IEEE\s+)?Transactions\s+(?:of|on)\b|"
+            r"In\s+(?:The\s+)?(?:[A-Z][a-z]+(?:-[a-z]+)?\s+){0,5}(?:Annual|International)\s+Conference\b|"
+            r"Under\s+review|(?:IEEE\s+)?Transactions\s+(?:of|on)\b|"
             r"(?:IEEE\s+)?Journal\s+of\b|ACM\s+Computing|Foundations\s+and\s+Trends\b|Center\s+for\b|"
+            r"(?=(?:Comput|Proc|Trans|Adv|Nat|Sci)\.\s+[A-Z][A-Za-z.& ]{2,80}\s+\d{1,4}\s*,\s*\d+)|"
             # Journal/conference records often append a carrier name followed
             # by volume/issue/pages without a stable keyword (e.g.
             # ``Remote Sensing, 15 (18):4588, 2023`` or
