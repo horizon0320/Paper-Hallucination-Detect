@@ -106,10 +106,23 @@ def _run_job(job_id: str, input_path: Path, stem: str) -> None:
         from tools_generate_report import generate_report
 
         html_path = generate_report(json_path)
-        counts: dict[str, int] = {}
-        for report in reports:
-            key = report.overall_verdict.value
-            counts[key] = counts.get(key, 0) + 1
+        # The HTML renderer normalizes abbreviation-only author differences and
+        # promotes genuine author conflicts to the visible “疑似幻觉” bucket.
+        # Read its normalized JSON back so the progress API reports the same
+        # totals users see in the generated page.
+        normalized = json.loads(json_path.read_text(encoding="utf-8"))
+        from tools_generate_report import has_author_mismatch
+        counts = {"VERIFIED": 0, "SUSPECTED": 0, "REVIEW": 0, "NOT_FOUND": 0}
+        for item in normalized:
+            status = item.get("overall_verdict")
+            if status == "NOT_FOUND":
+                counts["NOT_FOUND"] += 1
+            elif has_author_mismatch(item):
+                counts["SUSPECTED"] += 1
+            elif status == "VERIFIED":
+                counts["VERIFIED"] += 1
+            else:
+                counts["REVIEW"] += 1
         _set_job(
             job_id,
             phase="done",
