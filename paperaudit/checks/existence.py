@@ -8,6 +8,7 @@ from typing import Any
 
 from rapidfuzz import fuzz
 
+from paperaudit.config import get_settings
 from paperaudit.models import Candidate, CheckCost, CheckResult, CheckStatus, Reference, Verdict
 from paperaudit.sources.base import SourceAdapter
 
@@ -18,6 +19,9 @@ _DOI_IN_URL = re.compile(r'\b(10\.\d{4,}/[^\s"<>\]{}\\^`|]+)')
 # cached verdicts can otherwise mask a newly available arXiv/DBLP/web record
 # and make the report appear unchanged after a logic fix.
 _CACHE_VERSION = "record-linkage-v6-per-reference-dblp-arxiv"
+# A source adapter may contain several transport fallbacks. Bound the whole
+# operation so one unavailable registry cannot stall a batch indefinitely.
+_MAX_SOURCE_OPERATION_SECONDS = 12.0
 _AUTHOR_GROUP = re.compile(r"^[A-ZÀ-ÖØ-Ý](?:\.\s*|\s+)[A-Za-zÀ-ÖØ-öø-ÿ'’-]+(?:\s+[A-Za-zÀ-ÖØ-öø-ÿ'’-]+)*$")
 
 
@@ -285,6 +289,20 @@ async def check_existence(
     candidates: list[tuple[float, dict, Candidate]] = []
     evidence: dict[str, Any] = {}
 
+    source_timeout = min(
+        max(float(get_settings().request_timeout), 1.0),
+        _MAX_SOURCE_OPERATION_SECONDS,
+    )
+
+    async def _bounded(src: SourceAdapter, awaitable):
+        # DBLP and arXiv have their own batch-wide rate limiters. Applying a
+        # wall-clock timeout while a record is merely waiting in that queue
+        # turns a valid queued lookup into a false ``no_match``. Their network
+        # clients still enforce request-level timeouts once admitted.
+        if src.name in {"arxiv", "dblp"}:
+            return await awaitable
+        return await asyncio.wait_for(awaitable, timeout=source_timeout)
+
     # Domain adapters are part of the primary evidence set.  A CS paper may
     # appear as an arXiv preprint, a conference record, and a later indexed
     # publication; waiting until the generic search fails would hide useful
@@ -328,7 +346,7 @@ async def check_existence(
     if effective_doi:
         async def _lookup_doi(src: SourceAdapter):
             try:
-                return src, await src.lookup_doi(effective_doi), None
+                return src, await _bounded(src, src.lookup_doi(effective_doi)), None
             except Exception as exc:
                 return src, None, exc
 
@@ -350,7 +368,7 @@ async def check_existence(
             if not hasattr(src, "lookup_arxiv_id"):
                 return src, None, None
             try:
-                return src, await src.lookup_arxiv_id(ref.arxiv_id), None
+                return src, await _bounded(src, src.lookup_arxiv_id(ref.arxiv_id)), None
             except Exception as exc:
                 return src, None, exc
 
@@ -369,7 +387,7 @@ async def check_existence(
     # should not add its timeout to every other source in the batch.
     async def _search_source(src: SourceAdapter):
         try:
-            return src, await src.search(ref), None
+            return src, await _bounded(src, src.search(ref)), None
         except Exception as exc:
             return src, [], exc
 
@@ -388,7 +406,7 @@ async def check_existence(
     if ref.urls:
         async def _lookup_url(src: SourceAdapter, url: str):
             try:
-                return src, await src.lookup_url(url), None
+                return src, await _bounded(src, src.lookup_url(url)), None
             except Exception as exc:
                 return src, None, exc
 
@@ -428,13 +446,26 @@ async def check_existence(
     elapsed = (time.monotonic() - start) * 1000
 
     if not candidates:
-        result = CheckResult(
-            name="existence",
-            status=CheckStatus.FAIL,
-            confidence=0.9 if (ref.title or ref.doi) else 0.5,
-            evidence={**evidence, "verdict": "not_found", "candidates_checked": 0},
-            cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
-        )
+        # If every configured source failed at the transport/API layer, the
+        # citation is unresolved rather than evidence that the work does not
+        # exist. This distinction prevents outages and bot protection from
+        # being reported as a fabricated reference.
+        if source_results and all(item["status"] == "error" for item in source_results):
+            result = CheckResult(
+                name="existence",
+                status=CheckStatus.ERROR,
+                confidence=0.0,
+                evidence={**evidence, "verdict": "source_unavailable", "candidates_checked": 0},
+                cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+            )
+        else:
+            result = CheckResult(
+                name="existence",
+                status=CheckStatus.FAIL,
+                confidence=0.9 if (ref.title or ref.doi) else 0.5,
+                evidence={**evidence, "verdict": "not_found", "candidates_checked": 0},
+                cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+            )
     else:
         candidates.sort(key=lambda x: x[0], reverse=True)
         best_score, best_ev, best_cand = candidates[0]

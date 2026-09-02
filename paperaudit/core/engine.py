@@ -131,6 +131,11 @@ async def verify_many(
     opts: VerifyOptions,
     progress_callback: Callable[[int, int, VerificationReport], None] | None = None,
 ) -> list[VerificationReport]:
+    # Construct automatic domain adapters once per batch. Creating DBLP/arXiv
+    # clients inside every reference leaks sockets and multiplies connection
+    # setup cost; it also made large PDFs appear to hang after parsing.
+    if not opts.domain_sources and opts.domain_mode not in {"none", "pubmed", "dblp", "all"}:
+        opts.domain_sources = _build_domain_sources(refs[0], opts) if refs else []
     semaphore = asyncio.Semaphore(opts.concurrency)
 
     async def _bounded(ref: Reference) -> VerificationReport:

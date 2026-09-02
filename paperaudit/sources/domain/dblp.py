@@ -3,9 +3,6 @@ from __future__ import annotations
 import re
 import unicodedata
 import asyncio
-import json
-import urllib.parse
-import urllib.request
 import weakref
 
 import httpx
@@ -17,7 +14,10 @@ from paperaudit.sources.base import SourceAdapter
 _BASE = "https://dblp.org/search/publ/api"
 _FALLBACK_BASE = "http://dblp.org/search/publ/api"
 _DISAMBIGUATION_SUFFIX = re.compile(r"\s+\d{4}$")
-_DBLP_CONCURRENCY_LIMIT = 2
+# DBLP tolerates a small bounded batch better than a strictly serial queue.
+# Four slots keep the default 8-reference worker pool productive while
+# avoiding an uncontrolled burst to the public endpoint.
+_DBLP_CONCURRENCY_LIMIT = 4
 _LOOP_SEMAPHORES: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = weakref.WeakKeyDictionary()
 
 
@@ -138,7 +138,7 @@ class DBLPAdapter(SourceAdapter):
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=get_settings().request_timeout)
+            self._client = httpx.AsyncClient(timeout=min(float(get_settings().request_timeout), 8.0))
         return self._client
 
     async def close(self) -> None:
@@ -157,60 +157,36 @@ class DBLPAdapter(SourceAdapter):
     async def _search_limited(self, ref: Reference) -> list[Candidate]:
         client = await self._get_client()
         params = {"q": unicodedata.normalize("NFKC", ref.title), "format": "json", "h": "5"}
-        # Some macOS/network environments fail TLS negotiation with dblp.org
-        # even though the public API itself is reachable. Retry the same
-        # read-only query over the API's HTTP endpoint so a known conference
-        # record (notably USENIX Security) is not lost to a transport error.
-        # Prefer the endpoint that is reachable in restricted macOS TLS
-        # environments; HTTPS remains the second attempt where available.
-        for endpoint in (_FALLBACK_BASE, _BASE):
-            try:
-                # The HTTP endpoint redirects to HTTPS. Follow that redirect
-                # so the fallback is useful on environments where the first
-                # TLS attempt fails, rather than being treated as an empty
-                # search response (301 has no JSON payload).
-                r = await client.get(endpoint, params=params, follow_redirects=True)
-                if r.status_code == 200:
-                    hits = r.json().get("result", {}).get("hits", {}).get("hit", [])
-                    # A proxy/rate-limit layer can return a valid 200 with an
-                    # empty hit list. Do not treat that transient response as
-                    # authoritative; try the alternate endpoint and the
-                    # transport fallbacks below first.
-                    if hits:
-                        return [_hit_to_candidate(h) for h in hits]
-            except Exception:
-                continue
-        # A few macOS proxy/TLS stacks intermittently raise an SSL record-layer
-        # error for the shared client even though the public DBLP endpoint is
-        # reachable. Retry once with a short-lived client that disables only
-        # certificate verification; this is a read-only fallback and avoids
-        # silently losing the DBLP conference record.
+        # Query the canonical HTTPS API first.  The old HTTP route only
+        # redirected back here and multiplied timeouts during a large audit.
         try:
-            async with httpx.AsyncClient(
-                timeout=get_settings().request_timeout,
-                verify=False,
-                follow_redirects=True,
-            ) as fallback_client:
+            r = await client.get(_BASE, params=params)
+            if r.status_code == 200:
+                hits = r.json().get("result", {}).get("hits", {}).get("hit", [])
+                if hits:
+                    return [_hit_to_candidate(h) for h in hits]
+        except Exception:
+            pass
+        # Preserve compatibility with plain-HTTP mirrors/proxies. Do not
+        # follow its redirect in normal operation: it points back to the HTTPS
+        # endpoint above and otherwise repeats the same slow failure.
+        try:
+            r = await client.get(_FALLBACK_BASE, params=params, follow_redirects=False)
+            if r.status_code == 200:
+                hits = r.json().get("result", {}).get("hits", {}).get("hit", [])
+                if hits:
+                    return [_hit_to_candidate(h) for h in hits]
+        except Exception:
+            pass
+        # A short independent client covers intermittent shared-connection
+        # failures without allowing retry cascades to dominate the batch.
+        try:
+            async with httpx.AsyncClient(timeout=4.0, verify=False) as fallback_client:
                 r = await fallback_client.get(_BASE, params=params)
                 if r.status_code == 200:
                     hits = r.json().get("result", {}).get("hits", {}).get("hit", [])
                     if hits:
                         return [_hit_to_candidate(h) for h in hits]
-        except Exception:
-            pass
-        # Last-resort stdlib transport.  On some macOS builds httpx/OpenSSL
-        # fails during DBLP's HTTP→HTTPS redirect while urllib can complete
-        # the same read-only request through the system networking stack.
-        try:
-            query = urllib.parse.urlencode(params)
-            url = f"{_FALLBACK_BASE}?{query}"
-            payload = await asyncio.to_thread(
-                lambda: urllib.request.urlopen(url, timeout=get_settings().request_timeout).read()
-            )
-            data = json.loads(payload.decode("utf-8", errors="replace"))
-            hits = data.get("result", {}).get("hits", {}).get("hit", [])
-            if hits:
-                return [_hit_to_candidate(h) for h in hits]
         except Exception:
             pass
         return []

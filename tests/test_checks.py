@@ -129,6 +129,24 @@ class TestExistenceCheck:
             }]
             await adapter.close()
 
+    async def test_all_source_errors_are_not_reported_as_not_found(self):
+        class _BrokenSource(SourceAdapter):
+            name = "broken"
+
+            async def lookup_doi(self, doi):
+                raise TimeoutError("registry unavailable")
+
+            async def search(self, ref):
+                raise TimeoutError("registry unavailable")
+
+        result = await check_existence(
+            Reference(title="A real paper"),
+            sources=[_BrokenSource()],
+            use_cache=False,
+        )
+        assert result.status == CheckStatus.ERROR
+        assert result.evidence["verdict"] == "source_unavailable"
+
     async def test_metadata_mismatch_detected(self):
         doi = "10.48550/arXiv.1706.03762"
         ref = Reference(

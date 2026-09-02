@@ -241,7 +241,17 @@ def check_cmd(
                 )
                 from paperaudit.parse.plaintext import enrich_with_llm
                 enriched = await enrich_with_llm(refs, opts.llm_client)
-        return await verify_many(enriched, opts)
+        try:
+            return await verify_many(enriched, opts)
+        finally:
+            for source in opts.sources:
+                close = getattr(source, "close", None)
+                if close is not None:
+                    await close()
+            for source in opts.domain_sources:
+                close = getattr(source, "close", None)
+                if close is not None:
+                    await close()
 
     # Keep machine-readable JSON/MD output clean: progress belongs on stderr
     # so callers can redirect stdout directly to a valid artifact.

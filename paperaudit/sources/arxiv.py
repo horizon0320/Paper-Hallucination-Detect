@@ -4,6 +4,7 @@ import re
 import asyncio
 import unicodedata
 import xml.etree.ElementTree as ET
+import weakref
 
 import httpx
 
@@ -17,6 +18,23 @@ _BASE = "https://export.arxiv.org/api/query"
 # regional proxy. Keep the canonical host as a read-only second route.
 _BASE_ALIASES = (_BASE, "https://arxiv.org/api/query")
 _NS = {"atom": "http://www.w3.org/2005/Atom"}
+_ARXIV_CONCURRENCY_LIMIT = 3
+_LOOP_SEMAPHORES: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = weakref.WeakKeyDictionary()
+
+
+def _get_arxiv_semaphore() -> asyncio.Semaphore:
+    """Return an arXiv limiter scoped to the active event loop.
+
+    The public export API is sensitive to bursts.  Serialize requests within
+    a batch so every citation receives a meaningful lookup instead of several
+    concurrent connection resets being interpreted as empty results.
+    """
+    loop = asyncio.get_running_loop()
+    semaphore = _LOOP_SEMAPHORES.get(loop)
+    if semaphore is None:
+        semaphore = asyncio.Semaphore(_ARXIV_CONCURRENCY_LIMIT)
+        _LOOP_SEMAPHORES[loop] = semaphore
+    return semaphore
 
 
 def _entry_to_candidate(entry: ET.Element) -> Candidate:
@@ -108,7 +126,11 @@ class ArXivAdapter(SourceAdapter):
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=get_settings().request_timeout)
+            # arXiv is rate-limited and occasionally stalls on a regional
+            # proxy. Keep its per-request timeout bounded independently from
+            # slower publisher lookups so a full batch remains interactive.
+            timeout = min(float(get_settings().request_timeout), 8.0)
+            self._client = httpx.AsyncClient(timeout=timeout)
         return self._client
 
     async def close(self) -> None:
@@ -123,6 +145,10 @@ class ArXivAdapter(SourceAdapter):
         return None
 
     async def lookup_arxiv_id(self, arxiv_id: str) -> Candidate | None:
+        async with _get_arxiv_semaphore():
+            return await self._lookup_arxiv_id_limited(arxiv_id)
+
+    async def _lookup_arxiv_id_limited(self, arxiv_id: str) -> Candidate | None:
         client = await self._get_client()
         clean_id = re.sub(r"v\d+$", "", arxiv_id)
         # Explicit IDs are definitive identifiers.  arXiv occasionally
@@ -159,8 +185,12 @@ class ArXivAdapter(SourceAdapter):
         return None
 
     async def search(self, ref: Reference) -> list[Candidate]:
+        async with _get_arxiv_semaphore():
+            return await self._search_limited(ref)
+
+    async def _search_limited(self, ref: Reference) -> list[Candidate]:
         if ref.arxiv_id:
-            c = await self.lookup_arxiv_id(ref.arxiv_id)
+            c = await self._lookup_arxiv_id_limited(ref.arxiv_id)
             return [c] if c else []
         if not ref.title and not ref.authors:
             return []
