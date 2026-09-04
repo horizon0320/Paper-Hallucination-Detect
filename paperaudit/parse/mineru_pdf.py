@@ -132,6 +132,11 @@ def convert_pdf_to_markdown(path: Path, timeout: float = 900.0) -> str | None:
     # change extraction behaviour.
     env["MINERU_MODEL_SOURCE"] = "modelscope"
     env["MINERU_DEVICE_MODE"] = "cpu"
+    # MinerU's CPU pipeline imports ONNX Runtime.  On macOS, ORT 1.29 can
+    # abort during interpreter teardown while its optional telemetry HTTP
+    # worker is shutting down (a native SIGABRT outside Python's control).
+    # Disable that non-essential telemetry path for this isolated subprocess.
+    env["ORT_DISABLE_TELEMETRY"] = "1"
     command = [
         str(cli),
         "--path",
@@ -160,9 +165,10 @@ def convert_pdf_to_markdown(path: Path, timeout: float = 900.0) -> str | None:
         )
     except (OSError, subprocess.SubprocessError):
         return None
-    if completed.returncode != 0:
-        return None
-
+    # A native library can abort only during process teardown after MinerU has
+    # already written a complete Markdown/JSON result.  Prefer that produced
+    # evidence over silently falling back to the legacy PDF parser solely
+    # because the subprocess returned a non-zero exit code.
     markdown = _markdown_from_output(output_dir, path.stem)
     if markdown is not None:
         try:
