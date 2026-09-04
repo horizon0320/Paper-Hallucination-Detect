@@ -23,6 +23,11 @@ _PUBLISHER_YEAR_TAIL_RE = re.compile(
 def _normalize_pdf_text(value: str) -> str:
     """Repair common PDF glyph artifacts before parsing bibliographic fields."""
     text = unicodedata.normalize("NFKC", value or "")
+    # MinerU preserves inline HTML from some ACM templates (for example
+    # ``Wan<sub>g</sub>``).  Those tags are layout annotations, not citation
+    # content; remove the tags while retaining their text payload so names
+    # and titles become searchable again.
+    text = re.sub(r"</?[^>]+>", "", text)
     # Some PDF fonts export accents as a spacing glyph before the letter
     # (``Herv´e J´egou``) instead of a combining mark. Move the mark onto the
     # following vowel, then compose it so reports show the real author name.
@@ -44,7 +49,18 @@ def _normalize_pdf_text(value: str) -> str:
 def _citation_year_matches(chunk: str) -> list[re.Match[str]]:
     """Return year-like tokens while excluding page numbers such as ``pp. 2082–2086``."""
     matches: list[re.Match[str]] = []
+    identifier_spans = [
+        match.span()
+        for pattern in (
+            r"https?://\S+",
+            r"10\.\d{4,}/\S+",
+            r"arxiv\s*:\s*\S+",
+        )
+        for match in re.finditer(pattern, chunk, re.IGNORECASE)
+    ]
     for match in _YEAR_RE.finditer(chunk):
+        if any(start <= match.start() < end for start, end in identifier_spans):
+            continue
         before = chunk[max(0, match.start() - 12):match.start()]
         after = chunk[match.end():match.end() + 3]
         # A capitalized author initial (``... and Gao, P. 2023``) can look
@@ -59,6 +75,12 @@ def _citation_year_matches(chunk: str) -> list[re.Match[str]]:
     return matches
 
 _NUMBERED_RE = re.compile(r"^\s*(\[?\d{1,3}\]?\.?\)?\s+|[¹²³⁴⁵⁶⁷⁸⁹⁰]+\s+)")
+# Nature and a few publisher production templates put the numeric label in
+# its own text block, with the author/title block directly below it.  Treat a
+# bracketed or punctuated standalone label as the same structural boundary as
+# an inline ``[12] Author...`` marker.  Bare numbers remain excluded so page
+# numbers cannot manufacture bibliography entries.
+_STANDALONE_NUMBERED_RE = re.compile(r"^\s*(?:\[\s*\d{1,3}\s*\]|\d{1,3}[.)])\s*$")
 # Author-year references are common in AAAI, ACL, Springer and similar
 # proceedings. The author list can contain semicolons, "and", initials and
 # punctuation, so match a bounded prefix up to the first publication year
@@ -204,7 +226,12 @@ def _split_semicolon_author_year(lines: list[str]) -> list[str]:
         if not year_match:
             continue
         author_window = window[:year_match.end()]
-        if ";" not in author_window and not re.search(r"\band\b", author_window, re.IGNORECASE):
+        # This splitter is reserved for bibliographies whose authors are
+        # explicitly separated with semicolons (the AAAI-style layout it was
+        # written for).  Ordinary author-year records naturally contain
+        # ``and`` and must proceed to the blank-line/layout splitter; treating
+        # them as semicolon records drops long wrapped entries.
+        if ";" not in author_window:
             continue
         starts.append(start)
 
@@ -341,6 +368,21 @@ def _merge_wrapped_author_chunks(chunks: list[str]) -> list[str]:
             following = chunks[index + 1]
             current_text = current.strip()
             following_text = following.strip()
+            # In two-column PDFs, a very long author list can be split at a
+            # column/page boundary immediately after a surname comma:
+            # ``..., Lim,`` / ``H., Zoph, ... Paper title``.  The first piece
+            # is too long for the generic author-only heuristic, but its
+            # trailing comma plus an initial-led continuation is a reliable
+            # layout signal. Join it before field extraction.
+            if (
+                current_text.endswith(",")
+                and current_text.count(",") >= 2
+                and not re.search(r"\b(?:19|20)\d{2}[a-z]?\b", current_text, re.IGNORECASE)
+                and re.match(r"^[A-ZÀ-ÿ]\.,\s*[A-ZÀ-ÿ][A-Za-zÀ-ÿ'’\-]+,", following_text)
+            ):
+                merged.append(f"{current} {following}")
+                index += 2
+                continue
             if _is_wrapped_author_only_chunk(current_text) and following_text:
                 first_following_line = following.splitlines()[0].strip() if following else ""
                 # A title/venue continuation normally starts with a word,
@@ -431,7 +473,7 @@ def _split_numbered(lines: list[str]) -> list[str]:
     chunks: list[list[str]] = []
     current: list[str] = []
     for line in lines:
-        if _NUMBERED_RE.match(line):
+        if _NUMBERED_RE.match(line) or _STANDALONE_NUMBERED_RE.match(line):
             if current:
                 chunks.append(current)
             current = [line]
@@ -751,6 +793,9 @@ def detect_style(chunks: list[str]) -> Style:
     samples = chunks[:5]
     scores: dict[Style, int] = {s: 0 for s in Style}
     author_year_hits = 0
+    semicolon_author_year_hits = 0
+    lncs_hits = 0
+    lncs_structural_hits = 0
 
     for chunk in samples:
         group_author_year = bool(
@@ -762,6 +807,12 @@ def detect_style(chunks: list[str]) -> Style:
             # heuristics happen to match.
             scores[Style.AUTHOR_YEAR] += 1
             author_year_hits += 1
+            # AAAI-style author-year records use semicolons between named
+            # authors; this is the only author-year form that can plausibly
+            # resemble the ``Surname, I.: Title`` syntax of Springer/LNCS.
+            year_prefix = chunk[:next((m.start() for m in _YEAR_RE.finditer(chunk)), len(chunk))]
+            if ";" in year_prefix:
+                semicolon_author_year_hits += 1
         if _IEEE_RE.search(chunk) or _IEEE_QUOTED_RE.search(chunk):
             scores[Style.IEEE] += 2
         if _APA_RE.search(chunk):
@@ -773,7 +824,17 @@ def detect_style(chunks: list[str]) -> Style:
         if _CHICAGO_RE.search(chunk):
             scores[Style.CHICAGO] += 2
         if _LNCS_RE.match(chunk) and ': ' in chunk:
-            scores[Style.LNCS] += 2
+            lncs_hits += 1
+            # A colon inside ``arXiv:2304.04736`` or a DOI/URL is not the
+            # LNCS author/title separator. Count LNCS only when the first
+            # colon precedes the publication year and follows an author-like
+            # prefix. This prevents author-year CS references with arXiv
+            # identifiers from being parsed as ``authors: DOI``.
+            first_colon = chunk.find(': ')
+            first_year = next((m.start() for m in _YEAR_RE.finditer(chunk)), len(chunk))
+            if first_colon < first_year:
+                lncs_structural_hits += 1
+                scores[Style.LNCS] += 2
 
         # secondary signals
         if re.search(r'["“][^"”]{5,}["”]', chunk):
@@ -784,8 +845,16 @@ def detect_style(chunks: list[str]) -> Style:
             scores[Style.VANCOUVER] += 1
 
     # AAAI's semicolon-delimited author-year format can contain colons in
-    # titles, which otherwise makes the generic LNCS heuristic win. Require
-    # a small majority of clear author-year starts before selecting it.
+    # titles, which otherwise makes the generic LNCS heuristic win. Restrict
+    # that priority to the actual semicolon form. A Springer bibliography has
+    # a year and author-like prefix too, but must retain its `Author: Title`
+    # field boundary.
+    if semicolon_author_year_hits >= 2 and semicolon_author_year_hits * 2 >= len(samples):
+        return Style.AUTHOR_YEAR
+
+    if lncs_structural_hits >= 2 and lncs_structural_hits * 2 >= len(samples):
+        return Style.LNCS
+
     if author_year_hits >= 2 and author_year_hits * 2 >= len(samples):
         return Style.AUTHOR_YEAR
 
@@ -841,16 +910,79 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
     # ``10.5281/zenodo. 15753192``. Join the numeric continuation while
     # leaving normal prose spacing unchanged.
     chunk = re.sub(r"(10\.\d{4,}/[A-Za-z0-9._-]+\.)\s+(\d{3,})", r"\1\2", chunk)
+    # ACL and Springer DOI strings are occasionally split at a space by the
+    # PDF text layer (``10.18653/v1/2020. insights-1.7`` and
+    # ``10.1007/978-3-031-35320-8 42``). Join only these DOI namespaces so a
+    # normal publication year following another DOI is never absorbed.
+    chunk = re.sub(
+        r"(10\.18653/v1/[A-Za-z0-9._-]+)\s+([A-Za-z][A-Za-z0-9._-]+)",
+        r"\1\2",
+        chunk,
+        flags=re.IGNORECASE,
+    )
+    chunk = re.sub(
+        r"(10\.1007/978-[A-Za-z0-9._-]+)\s+(\d{1,4})(?=\b|[.,;)])",
+        r"\1_\2",
+        chunk,
+        flags=re.IGNORECASE,
+    )
+
+    # Natural-name references with an explicit arXiv/DOI tail are common in
+    # ACL/NeurIPS bibliographies.  The title is the sentence immediately
+    # before the identifier tail (``... Authors. Title. arxiv:...``).  The
+    # generic author-year boundary can otherwise consume the title into the
+    # author list and leave ``arxiv:...`` as the searchable title.  Recover
+    # this structure before style-specific extraction; the rule is based only
+    # on the explicit identifier marker and sentence shape, not on a paper
+    # name.
+    explicit_id_tail = re.search(
+        r"\s+(?:arxiv\s*:\s*\d{4}\.\d+|10\.48550/arXiv\.\d{4}\.\d+)",
+        chunk,
+        re.IGNORECASE,
+    )
+    # Proceedings citations without an arXiv identifier often use the same
+    # long-author form and introduce the carrier with ``. In ...``. Use that
+    # carrier boundary as an equivalent title delimiter (not a venue-specific
+    # special case).
+    carrier_tail = re.search(r"\.\s+In\s+", chunk, re.IGNORECASE)
+    forced_boundary = explicit_id_tail or carrier_tail
+    if forced_boundary and style in {Style.UNKNOWN, Style.AUTHOR_YEAR, Style.LNCS}:
+        before_id = chunk[:forced_boundary.start()].rstrip(" .")
+        # Match the final author-sentence/title-sentence pair. Greedy author
+        # prefix is intentional because initials contain many periods.
+        pair = re.search(
+            r"^(?P<authors>.+)\.\s+(?P<title>[A-ZÀ-ÖØ-Ý][^.]{8,240})\.?$",
+            before_id,
+        )
+        if pair:
+            parsed_authors = _parse_author_list(pair.group("authors"))
+            if parsed_authors:
+                # Keep the normal metadata extraction below, but supply the
+                # unambiguous title/authors override after identifiers/URLs
+                # are collected.
+                forced_title = pair.group("title").strip(" .")
+                forced_authors = parsed_authors
+            else:
+                forced_title = forced_authors = None
+        else:
+            forced_title = forced_authors = None
+    else:
+        forced_title = forced_authors = None
     doi = None
     m = _DOI_RE.search(chunk)
     if m:
         doi = m.group().rstrip(".,;)")
+        doi = re.sub(r"\.url$", "", doi, flags=re.IGNORECASE)
 
     urls = [u.rstrip(".,;)>\"'") for u in _URL_RE.findall(chunk)]
     urls = [u for u in urls if "doi.org" not in u]
-    # Drop truncated URLs that have no meaningful path (e.g. "https://arxiv" from pdfminer line breaks)
+    # Keep domain-root URLs. A citation to ``https://sourcegraph.com/`` or an
+    # organization home page is still an intentional source reference; the
+    # URL regex already requires a host, so only malformed scheme-less values
+    # are excluded here. The web adapter can then distinguish a blocked page
+    # from a citation that never supplied a source URL.
     from urllib.parse import urlparse
-    urls = [u for u in urls if urlparse(u).path.rstrip("/")]
+    urls = [u for u in urls if urlparse(u).scheme and urlparse(u).netloc]
 
     arxiv_id = None
     for u in urls + [chunk]:
@@ -884,7 +1016,14 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
         # IEEE and numbered proceedings commonly put the publication year at
         # the end; after page-number filtering, prefer the last remaining year
         # when style detection is uncertain.
-        ym = year_matches[-1] if (style == Style.AUTHOR_YEAR and ";" not in chunk) or len(year_matches) > 1 else year_matches[0]
+        # In author-year records the publication date is the first valid year
+        # after the author list. Later four-digit values commonly belong to
+        # ACM article numbers, volume/page metadata, or a repeated page
+        # header (for example ``Article 2011``). Taking the last token turns
+        # those layout artifacts into a false publication year.
+        ym = year_matches[0] if style == Style.AUTHOR_YEAR else (
+            year_matches[-1] if len(year_matches) > 1 else year_matches[0]
+        )
         year = int(ym.group(1))
 
     title = None
@@ -893,6 +1032,15 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
 
     if style == Style.IEEE:
         title, authors = _extract_ieee(chunk)
+        # Mixed IEEE bibliographies can contain one unquoted short title among
+        # otherwise quoted entries (books, reports, or older proceedings).
+        # Preserve the global style for normal records, but fall back to the
+        # structural generic extractor when the IEEE quote parser found no
+        # fields instead of returning an unresolvable reference.
+        if not title:
+            generic_title, generic_authors = _extract_generic(chunk)
+            if generic_title:
+                title, authors = generic_title, (generic_authors or authors)
     elif style == Style.AUTHOR_YEAR:
         title, authors, venue = _extract_author_year(chunk)
     elif style == Style.APA:
@@ -920,6 +1068,44 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
         else:
             title, authors = _extract_generic(chunk)
 
+    apply_forced = bool(forced_title) and (
+        (explicit_id_tail is not None and (
+            not title
+            or re.search(r"\b(?:arxiv|doi)\s*[:.]", title or "", re.IGNORECASE)
+        ))
+        or (carrier_tail is not None and len(authors) < 3)
+    )
+    if apply_forced:
+        title = forced_title
+        authors = forced_authors or authors
+        if venue and re.match(r"^(?:URL\s*:?[ \t]*)?https?://", venue, re.IGNORECASE):
+            venue = None
+
+    # Some IEEE/ACL text layers place the DOI marker where a quote/title
+    # boundary would normally be, causing the parser to return the literal
+    # ``doi: ...`` (or an arXiv metadata tail) as the title.  Re-parse only
+    # the bibliographic text before that marker; this is a structural repair
+    # that works across DOI-bearing citation styles.
+    if title and re.match(r"^\s*(?:doi\s*:|arxiv\s*:\s*\d{4}\.)", title, re.IGNORECASE):
+        marker = re.search(r"\s+(?:doi\s*:|arxiv\s*:\s*\d{4}\.)", chunk, re.IGNORECASE)
+        if marker:
+            prefix = chunk[:marker.start()].rstrip(" .")
+            alt_title, alt_authors, alt_venue = _extract_author_year(prefix)
+            if alt_title:
+                title = alt_title
+                if alt_authors:
+                    authors = alt_authors
+                if alt_venue:
+                    venue = alt_venue
+
+    # If a DOI-bearing entry was parsed by a generic style branch, it may
+    # still contain the proceedings carrier after the actual title
+    # (``Title. In ... doi:...``).  The first sentence is the bibliographic
+    # title; trim only when a clear carrier marker is present.
+    if title and doi:
+        carrier = re.search(r"\.\s+In\s+(?:the\s+|proceedings\b|\d|[A-Z])", title, re.IGNORECASE)
+        if carrier:
+            title = title[:carrier.start()].strip(" .") or title
     title = _normalize_compact_title(title)
 
     return Reference(
@@ -949,6 +1135,10 @@ def _normalize_compact_title(value: str | None) -> str | None:
     if not value:
         return value
     value = unicodedata.normalize("NFKC", value)
+    # PDF text layers can insert a wrap-space after a decimal point in a model
+    # name (``Qwen2. 5-Coder``). Join only digit-dot-digit fragments; ordinary
+    # sentence punctuation and decimal values separated by prose are intact.
+    value = re.sub(r"(?<=\d)\.\s+(?=\d)", ".", value)
     # Restore spaces removed after punctuation and between camel-case words.
     value = re.sub(r"(?<=[,:;])(?=[A-Za-z])", " ", value)
     # Split camel-case words in prose (``NuminaMath``), but preserve
@@ -1053,6 +1243,25 @@ def _extract_generic(chunk: str) -> tuple[str | None, list[str]]:
     if lncs_title:
         return lncs_title, lncs_authors
 
+    # IEEE-like records occasionally omit quotation marks around a short
+    # book/report title (for example ``... Nawab, Signals & systems.
+    # Pearson Educación, 1997.``).  The generic sentence-length guard below
+    # rejects such titles as too short and leaves the whole record
+    # unresolvable.  Detect the bibliographic shape instead: a comma-delimited
+    # author prefix, a title sentence, then a carrier/year sentence.  Requiring
+    # a publication year after the title keeps ordinary prose and author-list
+    # commas out of this fallback.
+    unquoted = re.search(
+        r",\s+(?P<title>[A-Za-z][^.\n]{2,100})\.\s+"
+        r"(?P<carrier>[^.\n]{2,120}\b(?:19|20)\d{2})\.",
+        chunk,
+    )
+    if unquoted:
+        prefix = chunk[:unquoted.start()]
+        title = unquoted.group("title").strip(" .,:;") or None
+        if title:
+            return title, _parse_author_list(prefix)
+
     sentences = re.split(r"(?<=[.!?])\s+", chunk)
     for sentence in sentences[1:3]:
         stripped = sentence.strip()
@@ -1064,6 +1273,38 @@ def _extract_generic(chunk: str) -> tuple[str | None, list[str]]:
 
 def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]:
     """Extract AAAI/ACL and arXiv natural-name author-year references."""
+    # Organization-only landing-page records (for example an association or
+    # consortium followed directly by ``URL https://...``) must be handled
+    # before the sentence-style web branch below; otherwise ``URL`` becomes a
+    # bogus article title.
+    org_root_url = re.match(
+        r"^\s*(?P<org>[^.]{2,100})\.\s*(?:URL\s*:?[ \t]*)?https?://",
+        chunk,
+        re.IGNORECASE,
+    )
+    if org_root_url:
+        org = org_root_url.group("org").strip()
+        if re.search(
+            r"\b(?:Association|Organization|Institute|Consortium|Society|Laboratory|Lab|"
+            r"Foundation|Committee|Corporation|Company|Community|Team)\b",
+            org,
+            re.IGNORECASE,
+        ):
+            return None, [org], None
+
+    # Dataset pages often include a descriptive title and month/year before
+    # the URL, while still using an organization as the author. Preserve that
+    # title and keep the landing page in ``Reference.urls``.
+    dataset_web = re.match(
+        r"^\s*(?P<org>[^.]{2,100})\.\s+(?P<title>.+?),\s*"
+        r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+"
+        r"(?:19|20)\d{2}\.\s*(?:URL\s*:?[ \t]*)?https?://",
+        chunk,
+        re.IGNORECASE,
+    )
+    if dataset_web and re.search(r"dataset|hugging\s*face|model", dataset_web.group("title"), re.IGNORECASE):
+        return dataset_web.group("title").strip(" .,:;"), [dataset_web.group("org").strip()], None
+
     # Organization-authored web/news records use a sentence-style prefix,
     # rather than the ``Organization, 2025. URL ...`` form handled below:
     # ``The White House. America's AI Action Plan. https://...``.  Parse the
@@ -1078,6 +1319,8 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
     if web_org and _looks_like_organization_line(web_org.group("org") + "."):
         title = web_org.group("title").strip().rstrip(" .,:;") or None
         org = web_org.group("org").strip()
+        if title and title.casefold().startswith("url "):
+            return None, [org], None
         return title, [org], None
 
     # Organization/web citations commonly have no article title in the
@@ -1156,6 +1399,16 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
             )
             if slug_boundary and ("," in chunk[:slug_boundary.start()] or "et al" in chunk[:slug_boundary.start()].casefold()):
                 boundary = slug_boundary
+            # Titles can start with a lowercase project name (``epalm:`` or
+            # ``news-please:``). A colon immediately after that token is a
+            # strong author/title boundary when the prefix is comma-rich.
+            for m in re.finditer(r"\.\s+(?=[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9\-]{1,60}:)", chunk):
+                prefix = chunk[:m.start()]
+                if _looks_like_author_start(prefix.strip()) and (
+                    prefix.count(",") >= 1 or len(prefix.split()) <= 4
+                ):
+                    boundary = m
+                    break
             for m in re.finditer(r"\.\s+(?=[A-ZÀ-ÿ][^\n]{3,140})", chunk):
                 if boundary is not None:
                     break
@@ -1197,7 +1450,7 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
     # Stop the title at common venue/metadata markers; otherwise use the first
     # sentence boundary. This keeps search queries focused on the work title.
     venue_markers = re.search(
-            r"\s+(?=(?:arXiv\s*(?:preprint|:)|Preprint\s+at|In\s+Proceedings|In\s+Advances\s+in|"
+            r"\s+(?=(?:arXiv\s*(?:preprint|:)|Preprint(?:\s+at|\s*[,;:]\s*arXiv)|In\s+Proceedings|In\s+Advances\s+in|"
             r"In\s+(?:The\s+)?(?:[A-Z][A-Za-z-]*\s+){0,4}International\b|"
             r"In\s+(?:The\s+)?(?:USENIX|NeurIPS|NIPS|ICLR|ICML|CVPR|ICCV|ECCV|ACL|EMNLP|NAACL|"
             r"AAAI|IJCAI|WACV|NDSS|SIGMOD|KDD|ICSE|FSE|PLDI|POPL|SOSP|OSDI)\b|"

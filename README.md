@@ -91,7 +91,7 @@ HTML 报告会列出原始引用、搜索到的记录、字段对照和各信源
 
 - Python 3.9+
 - 可访问学术数据库接口的网络环境
-- PDF 输入需要 PyMuPDF（安装项目依赖时会自动安装）
+- PDF 输入默认使用 MinerU 3.4.5（Python 3.12）；请准备 `/Users/acc/Documents/ChatGPT/paper-ethical-audit/.venv-mineru/bin/mineru`。MinerU 不可用时才回退到项目自带的 PDF 文本解析器。
 
 可选设置：
 

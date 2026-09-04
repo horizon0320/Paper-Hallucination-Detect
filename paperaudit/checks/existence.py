@@ -18,7 +18,7 @@ _DOI_IN_URL = re.compile(r'\b(10\.\d{4,}/[^\s"<>\]{}\\^`|]+)')
 # Bump whenever matching, parsing, or source-routing semantics change.  Older
 # cached verdicts can otherwise mask a newly available arXiv/DBLP/web record
 # and make the report appear unchanged after a logic fix.
-_CACHE_VERSION = "record-linkage-v6-per-reference-dblp-arxiv"
+_CACHE_VERSION = "record-linkage-v7-version-aware-web-citations"
 # A source adapter may contain several transport fallbacks. Bound the whole
 # operation so one unavailable registry cannot stall a batch indefinitely.
 _MAX_SOURCE_OPERATION_SECONDS = 12.0
@@ -107,7 +107,15 @@ def _authors_compatible(ref_authors: list[str], cand_authors: list[str]) -> bool
     if ref_seq == cand_seq:
         return True
     shorter, longer = (ref_seq, cand_seq) if len(ref_seq) < len(cand_seq) else (cand_seq, ref_seq)
-    return longer[:len(shorter)] == shorter
+    if longer[:len(shorter)] == shorter:
+        return True
+    # Preprints and their eventual proceedings versions occasionally reorder
+    # the same contributors. That is not an author-list substitution and must
+    # not be reported as a likely hallucination.  Continue to reject actual
+    # missing/replaced names (and initial conflicts) below.
+    if len(ref_seq) == len(cand_seq):
+        return sorted(ref_seq) == sorted(cand_seq)
+    return False
 
 
 def _author_overlap(ref_authors: list[str], cand_authors: list[str]) -> float:
@@ -165,6 +173,34 @@ def _year_score(ref_year: int | None, cand_year: int | None) -> float:
     return 0.0
 
 
+def _venue_score(ref_venue: str | None, candidate_venue: str | None) -> float:
+    """Compare long citation carriers with compact CS registry labels."""
+    if not ref_venue or not candidate_venue:
+        return 0.5
+
+    def normalize(value: str) -> str:
+        text = unicodedata.normalize("NFKC", value).casefold()
+        # DBLP typically emits compact venue labels while PDF bibliographies
+        # spell out the carrier. These aliases are bibliographic equivalences,
+        # not title-specific rules.
+        text = re.sub(
+            r"international conference on (?:learning representations|representation learning)",
+            "iclr",
+            text,
+        )
+        text = re.sub(r"(?:advances in |conference on )?neural information processing systems", "neurips", text)
+        text = re.sub(r"international conference on machine learning", "icml", text)
+        text = re.sub(r"conference on computer vision and pattern recognition", "cvpr", text)
+        text = re.sub(r"association for computational linguistics", "acl", text)
+        return re.sub(r"[^a-z0-9]+", " ", text).strip()
+
+    cited, found = normalize(ref_venue), normalize(candidate_venue)
+    known = {"iclr", "neurips", "icml", "cvpr", "acl", "emnlp", "naacl", "aaai", "ijcai", "iccv", "eccv"}
+    if any(alias in cited.split() and alias in found.split() for alias in known):
+        return 1.0
+    return fuzz.token_sort_ratio(cited, found) / 100.0
+
+
 def _score_candidate(ref: Reference, cand: Candidate) -> tuple[float, dict[str, Any]]:
     evidence: dict[str, Any] = {}
 
@@ -197,13 +233,15 @@ def _score_candidate(ref: Reference, cand: Candidate) -> tuple[float, dict[str, 
     year_score = _year_score(ref.year, cand.year)
     evidence["year_score"] = round(year_score, 3)
 
-    venue_score = 0.5
-    if ref.venue and cand.venue:
-        venue_score = fuzz.token_sort_ratio(ref.venue.lower(), cand.venue.lower()) / 100.0
+    venue_score = _venue_score(ref.venue, cand.venue)
     evidence["venue_score"] = round(venue_score, 3)
+    # Expose identifier agreement only when the cited metadata also supports
+    # the record; a reused/wrong identifier must not look like a confirmed
+    # match to downstream verdict/report code.
+    if title_score >= 0.85 or not ref.title or not cand.title:
+        evidence.update({"exact_arxiv_match": exact_arxiv, "exact_doi_match": exact_doi})
 
     if identifier_match and title_score >= 0.85:
-        evidence.update({"exact_arxiv_match": exact_arxiv, "exact_doi_match": exact_doi})
         # Keep identifier matches dominant, but let the best author-aligned
         # record win when multiple sources expose the same identifier with
         # different author normalization/completeness.
@@ -223,9 +261,24 @@ def _score_candidate(ref: Reference, cand: Candidate) -> tuple[float, dict[str, 
     return composite, evidence
 
 
-def _check_metadata_consistency(ref: Reference, best: Candidate) -> list[str]:
+def _check_metadata_consistency(
+    ref: Reference,
+    best: Candidate,
+    venue_score: float | None = None,
+    identifier_match: bool = False,
+) -> list[str]:
     mismatches = []
-    if ref.year and best.year and abs(ref.year - best.year) > 2:
+    # A preprint and its eventual proceedings version may be one year apart.
+    # That difference is material only when the citation itself names the
+    # same publication venue as the selected proceedings record: in that
+    # case, mixing the preprint year with the conference carrier is a
+    # metadata/version inconsistency, not an author hallucination.
+    venue_aligned = bool(venue_score is not None and venue_score >= 0.75)
+    if ref.year and best.year and (
+        abs(ref.year - best.year) > 2
+        or (ref.year != best.year and venue_aligned)
+        or (ref.year != best.year and identifier_match)
+    ):
         mismatches.append(f"year: cited={ref.year}, found={best.year}")
     if ref.doi and best.doi and ref.doi.lower().strip("/") != best.doi.lower().strip("/"):
         mismatches.append(f"doi: cited={ref.doi}, found={best.doi}")
@@ -374,12 +427,16 @@ async def check_existence(
 
         arxiv_results = await asyncio.gather(*(_lookup_arxiv(src) for src in all_sources))
         api_calls += sum(1 for src in all_sources if hasattr(src, "lookup_arxiv_id"))
+        arxiv_id_resolved_sources: set[str] = set()
         for src, cand, error in arxiv_results:
             if error is not None:
                 evidence[f"{src.name}_arxiv_error"] = str(error)
             if cand:
                 score, ev = _score_candidate(ref, cand)
                 candidates.append((score, {**ev, "source": src.name, "via": "arxiv_lookup"}, cand))
+                arxiv_id_resolved_sources.add(src.name)
+    else:
+        arxiv_id_resolved_sources = set()
 
     # Always collect title/author records from every configured adapter. This
     # is deliberate record linkage, rather than a fallback after NOT_FOUND.
@@ -391,8 +448,18 @@ async def check_existence(
         except Exception as exc:
             return src, [], exc
 
-    search_results = await asyncio.gather(*(_search_source(src) for src in all_sources))
-    api_calls += len(all_sources)
+    # A successful explicit arXiv-ID lookup is already the source's strongest
+    # possible title/author record.  Repeating `search()` for that adapter
+    # issued the same public API request a second time for every preprint,
+    # increasing rate-limit failures in full-paper audits.  Keep all other
+    # independent source searches, and retry arXiv search only when the ID
+    # lookup itself produced no record.
+    search_sources = [
+        src for src in all_sources
+        if not (ref.arxiv_id and src.name == "arxiv" and src.name in arxiv_id_resolved_sources)
+    ]
+    search_results = await asyncio.gather(*(_search_source(src) for src in search_sources))
+    api_calls += len(search_sources)
     for src, results, error in search_results:
         if error is not None:
             evidence[f"{src.name}_error"] = str(error)
@@ -458,6 +525,24 @@ async def check_existence(
                 evidence={**evidence, "verdict": "source_unavailable", "candidates_checked": 0},
                 cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
             )
+        elif ref.urls:
+            # A cited URL can describe a legitimate software project, policy
+            # page, dataset, or other web source that is not expected to have
+            # an academic database record. With no high-confidence metadata
+            # result, do not call it "not found": we can only say that no
+            # scholarly record was linked. Preserve it as a review item.
+            result = CheckResult(
+                name="existence",
+                status=CheckStatus.WARN,
+                confidence=0.0,
+                evidence={
+                    **evidence,
+                    "verdict": "web_source_unresolved",
+                    "candidates_checked": 0,
+                    "web_source_unresolved": True,
+                },
+                cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+            )
         else:
             result = CheckResult(
                 name="existence",
@@ -468,16 +553,116 @@ async def check_existence(
             )
     else:
         candidates.sort(key=lambda x: x[0], reverse=True)
-        best_score, best_ev, best_cand = candidates[0]
-        strong = _strong_candidates(ref, candidates)
+        # An exact DOI/arXiv identifier whose authoritative title disagrees
+        # with the citation is stronger evidence than a failed lexical search:
+        # it indicates a wrong identifier or a hallucinated title. Surface it
+        # explicitly instead of downgrading the entry to NOT_FOUND.
+        identifier_conflicts = [
+            item for item in candidates
+            if ((ref.arxiv_id and item[2].arxiv_id and ref.arxiv_id == item[2].arxiv_id)
+                or (ref.doi and item[2].doi and ref.doi.lower().rstrip("/") == item[2].doi.lower().rstrip("/")))
+            and item[1].get("title_score", 0.0) < 0.65
+            and ref.title
+            and item[2].title
+        ]
+        if identifier_conflicts:
+            best_score, best_ev, best_cand = max(identifier_conflicts, key=lambda item: item[0])
+            evidence.update(best_ev)
+            evidence.update({
+                "best_candidate_title": best_cand.title,
+                "best_candidate_source": best_cand.source,
+                "best_candidate_year": best_cand.year,
+                "best_candidate_doi": best_cand.doi,
+                "best_candidate_venue": best_cand.venue,
+                "best_candidate_authors": best_cand.authors,
+                "total_candidates": len(candidates),
+                "mismatches": [
+                    f"title: cited={ref.title}, found={best_cand.title}",
+                ],
+            })
+            result = CheckResult(
+                name="existence",
+                status=CheckStatus.WARN,
+                confidence=0.95,
+                evidence=evidence,
+                cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+            )
+            if use_cache:
+                from paperaudit.cache import get_cache
+                cache = get_cache()
+                raw_key = ref.doi or ref.arxiv_id or (f"{ref.title}|{ref.year}" if ref.title else None)
+                cache_key = f"{_CACHE_VERSION}:{raw_key}" if raw_key else None
+                if cache_key:
+                    cache.set("existence", cache_key, {
+                        "status": result.status.value,
+                        "confidence": result.confidence,
+                        "evidence": result.evidence,
+                    })
+            return result
+        # Search APIs routinely return lexical near-misses (especially for
+        # short titles). Never promote a candidate with weak title *and*
+        # author evidence to the selected record; doing so made unrelated
+        # works such as ALBERT/DPIC appear as if they were the cited paper.
+        # Keep all raw candidates in the audit trail, but link only records
+        # with a meaningful title match plus either author overlap or an exact
+        # identifier whose metadata agrees with the title.
+        linkable = [
+            item for item in candidates
+            if item[1].get("title_score", 0.0) >= 0.65
+            and (
+                item[1].get("author_score", 0.0) >= 0.2
+                or item[1].get("exact_arxiv_match")
+                or item[1].get("exact_doi_match")
+            )
+        ]
+        if not linkable:
+            evidence["candidate_sources"] = _candidate_summaries(candidates)
+            evidence["total_candidates"] = len(candidates)
+            result = CheckResult(
+                name="existence",
+                status=CheckStatus.FAIL,
+                confidence=0.7,
+                evidence={**evidence, "verdict": "not_found", "candidates_checked": len(candidates)},
+                cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+            )
+            if use_cache:
+                from paperaudit.cache import get_cache
+                cache = get_cache()
+                raw_key = ref.doi or ref.arxiv_id or (f"{ref.title}|{ref.year}" if ref.title else None)
+                cache_key = f"{_CACHE_VERSION}:{raw_key}" if raw_key else None
+                if cache_key:
+                    cache.set("existence", cache_key, {
+                        "status": result.status.value,
+                        "confidence": result.confidence,
+                        "evidence": result.evidence,
+                    })
+            return result
+        # Select from linkable candidates only; low-quality records remain
+        # visible above for manual/LLM review but cannot drive a verdict.
+        best_score, best_ev, best_cand = linkable[0]
+        strong = _strong_candidates(ref, linkable)
         strong_sources = sorted({item[2].source for item in strong})
         evidence["candidate_sources"] = _candidate_summaries(candidates)
         evidence["independent_source_count"] = len(strong_sources)
 
-        # Prefer a high-quality candidate whose year agrees with the citation
-        # over a same-title record from one source carrying a bad/late year.
+        # Prefer a venue-aligned version with the strongest complete metadata.
+        # A preprint year can legitimately differ from the venue year, so
+        # choosing a lower-quality year match first can manufacture an author
+        # conflict when the cited venue/version has an exact author record.
         year_matches = [item for item in strong if ref.year and item[2].year == ref.year]
-        if year_matches:
+        venue_matches = [
+            item for item in strong
+            if ref.venue and item[1].get("venue_score", 0.0) >= 0.75
+        ]
+        if venue_matches:
+            best_score, best_ev, best_cand = max(
+                venue_matches,
+                key=lambda item: (
+                    item[1].get("author_score", 0.0),
+                    item[0],
+                ),
+            )
+        elif year_matches:
             best_score, best_ev, best_cand = max(year_matches, key=lambda x: x[0])
 
         evidence.update(best_ev)
@@ -493,7 +678,12 @@ async def check_existence(
 
         # High title match always warrants a look, even if other fields diverge
         if title_score >= 0.85 or best_score * 100 >= _TITLE_PASS_THRESHOLD:
-            mismatches = _check_metadata_consistency(ref, best_cand)
+            mismatches = _check_metadata_consistency(
+                ref,
+                best_cand,
+                best_ev.get("venue_score"),
+                bool(best_ev.get("exact_arxiv_match") or best_ev.get("exact_doi_match")),
+            )
             # A single source's year disagreement is not enough to claim a
             # metadata mismatch. Crossref in particular can contain duplicate
             # or later-version records for seminal papers; require either a
@@ -504,9 +694,13 @@ async def check_existence(
                     item[2].source for item in strong
                     if item[2].year is not None and item[2].year != ref.year
                 }
-                if year_matches:
+                venue_aligned = bool(best_ev.get("venue_score", 0.0) >= 0.75)
+                identifier_match = bool(
+                    best_ev.get("exact_arxiv_match") or best_ev.get("exact_doi_match")
+                )
+                if year_matches and not venue_aligned and not identifier_match:
                     mismatches = [m for m in mismatches if not m.startswith("year:")]
-                elif len(conflicting_sources) < 2:
+                elif len(conflicting_sources) < 2 and not venue_aligned and not identifier_match:
                     mismatches = [m for m in mismatches if not m.startswith("year:")]
                     evidence["year_conflict_unconfirmed"] = {
                         "cited_year": ref.year,
@@ -529,6 +723,16 @@ async def check_existence(
         else:
             status = CheckStatus.FAIL
             confidence = 0.7
+
+        # Do not label a web citation as non-existent solely because generic
+        # academic search returned loose, low-score candidates. The cited URL
+        # still identifies a source type that may be a tool, organization, or
+        # policy page rather than a scholarly work.
+        if status == CheckStatus.FAIL and ref.urls:
+            status = CheckStatus.WARN
+            confidence = 0.0
+            evidence["verdict"] = "web_source_unresolved"
+            evidence["web_source_unresolved"] = True
 
         result = CheckResult(
             name="existence",

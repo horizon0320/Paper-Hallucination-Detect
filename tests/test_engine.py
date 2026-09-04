@@ -8,7 +8,9 @@ from paperaudit.models import Candidate, Reference, Verdict, CheckStatus
 from paperaudit.core.engine import _build_enriched, _build_domain_sources, verify_one, verify_many
 from paperaudit.core.cascade import VerifyOptions
 from paperaudit.sources.openalex import OpenAlexAdapter
-from paperaudit.checks.existence import _score_candidate
+from paperaudit.checks.existence import _authors_compatible, _check_metadata_consistency, _score_candidate, _venue_score
+from paperaudit.core.verdict import compute_verdict
+from paperaudit.models import CheckResult
 
 _OPENALEX_WORK = {
     "id": "https://openalex.org/W2964232343",
@@ -28,6 +30,61 @@ _OPENALEX_WORK = {
 
 @pytest.mark.asyncio
 class TestEngine:
+    async def test_unresolved_web_source_is_not_not_found(self):
+        ref = Reference(
+            title="Example Tool",
+            authors=["Example, Inc."],
+            urls=["https://example.com/"],
+        )
+        verdict, _notes = compute_verdict(ref, [
+            CheckResult(
+                name="existence",
+                status=CheckStatus.WARN,
+                evidence={"web_source_unresolved": True},
+            )
+        ])
+        assert verdict == Verdict.UNRESOLVABLE
+
+    async def test_venue_aligned_version_year_is_a_metadata_mismatch(self):
+        ref = Reference(
+            title="Example Work",
+            authors=["Jamie Hayes", "Ilia Shumailov", "William P Porter", "Aneesh Pappu"],
+            year=2024,
+            venue="In The Thirteenth International Conference on Learning Representations",
+        )
+        candidate = Candidate(
+            title="Example Work",
+            authors=["Jamie Hayes", "Ilia Shumailov", "William P Porter", "Aneesh Pappu"],
+            year=2025,
+            venue="International Conference on Learning Representations",
+            source="dblp",
+        )
+        mismatches = _check_metadata_consistency(ref, candidate, venue_score=0.9)
+        assert "year: cited=2024, found=2025" in mismatches
+
+    async def test_author_reordering_is_not_an_author_substitution(self):
+        # A preprint and proceedings version can present the same authors in a
+        # different order. This is not evidence of a fabricated author list.
+        assert _authors_compatible(
+            ["Jamie Hayes", "Ilia Shumailov", "William P Porter", "Aneesh Pappu"],
+            ["Aneesh Pappu", "William P Porter", "Ilia Shumailov", "Jamie Hayes"],
+        )
+
+    async def test_explicit_arxiv_identifier_year_conflict_is_not_suppressed(self):
+        ref = Reference(title="Example Work", year=2024, arxiv_id="2308.12950")
+        candidate = Candidate(
+            title="Example Work", year=2023, arxiv_id="2308.12950", source="arxiv"
+        )
+        assert "year: cited=2024, found=2023" in _check_metadata_consistency(
+            ref, candidate, venue_score=0.2, identifier_match=True
+        )
+
+    async def test_venue_score_equates_iclr_abbreviation_and_full_name(self):
+        assert _venue_score(
+            "In The Thirteenth International Conference on Learning Representations",
+            "ICLR",
+        ) == 1.0
+
     async def test_wrong_arxiv_id_does_not_override_conflicting_title(self):
         ref = Reference(title="NuminaMath: A new frontier for LLM mathematical reasoning", arxiv_id="2406.00762")
         cand = Candidate(

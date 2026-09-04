@@ -10,9 +10,10 @@ from paperaudit.parse.ris import parse_ris
 from paperaudit.parse.csl_json import parse_csl_json
 from paperaudit.parse.nbib import parse_nbib
 from paperaudit.parse.doi_list import parse_doi_list
-from paperaudit.parse.plaintext import split, detect_style, extract_fields, Style, parse_plaintext
+from paperaudit.parse.plaintext import _merge_wrapped_author_chunks, split, detect_style, extract_fields, Style, parse_plaintext
 from paperaudit.parse.intext import canonical_author_key, extract_intext_citations
 from paperaudit.parse.detect import auto_parse
+from paperaudit.parse.pdf_refs import _trim_bibliography_end
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -104,6 +105,27 @@ class TestDoiList:
 
 
 class TestPlaintext:
+    def test_preserves_domain_root_url_for_web_citation(self):
+        ref = extract_fields(
+            "Sourcegraph, Inc. 2025. Sourcegraph: Universal Code Search. https://sourcegraph.com/",
+            Style.AUTHOR_YEAR,
+        )
+        assert ref.urls == ["https://sourcegraph.com/"]
+
+    def test_author_year_ignores_article_number_as_publication_year(self):
+        ref = extract_fields(
+            "Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida. 2022. Training language models to follow instructions with human feedback. In Proceedings of NeurIPS. Curran Associates Inc., Article 2011, 15 pages.",
+            Style.AUTHOR_YEAR,
+        )
+        assert ref.year == 2022
+
+    def test_title_joins_pdf_split_decimal_model_names(self):
+        ref = extract_fields(
+            "A. Author and B. Writer. 2024. Qwen2. 5-Coder Technical Report. arXiv preprint.",
+            Style.AUTHOR_YEAR,
+        )
+        assert ref.title == "Qwen2.5-Coder Technical Report"
+
     def test_canonical_author_key_handles_pdf_glued_citations(self):
         assert canonical_author_key("Su, H") == "su"
         assert canonical_author_key("Carvalho, O. L. F. d") == "carvalho"
@@ -609,6 +631,45 @@ Next Author and Another Author. A second paper. In Conference, 2023.
             Style.IEEE,
         )
         assert ref.authors == ["Z. Tian", "C.H. Shen", "H. Chen", "T. He"]
+
+
+class TestPdfReferenceBoundaries:
+    def test_wrapped_author_initial_is_not_treated_as_appendix_heading(self):
+        lines = [
+            "Brown, T. B., Mann, B., and Amodei,",
+            "D. Language Models are Few-Shot Learners.",
+            "In 34th Conference on Neural Information Processing Systems.",
+            "",
+            "Chakraborty, S. Another Reference. 2023.",
+        ]
+        assert _trim_bibliography_end(lines.copy()) == lines
+
+    def test_blank_separated_appendix_label_still_ends_bibliography(self):
+        lines = [
+            "Smith, A. A reference. 2023.",
+            "",
+            "A",
+            "Additional Results",
+            "Appendix prose.",
+        ]
+        assert _trim_bibliography_end(lines.copy()) == lines[:2]
+
+    def test_wrapped_author_initial_with_title_is_not_inline_appendix(self):
+        lines = [
+            "Brown, T. B., Mann, B., and Amodei,",
+            "D. Language Models are Few-Shot Learners.",
+            "In NeurIPS 2020.",
+        ]
+        assert _trim_bibliography_end(lines.copy()) == lines
+
+    def test_merges_column_split_long_author_list(self):
+        chunks = [
+            "Chowdhery, A., Narang, S., Devlin, J., Lim,",
+            "H., Zoph, B., and Fiedel, N. PaLM: Scaling Language Models. 2022.",
+        ]
+        assert _merge_wrapped_author_chunks(chunks) == [
+            "Chowdhery, A., Narang, S., Devlin, J., Lim, H., Zoph, B., and Fiedel, N. PaLM: Scaling Language Models. 2022."
+        ]
 
 
 class TestIntextCitations:

@@ -5,6 +5,7 @@ import asyncio
 import unicodedata
 import xml.etree.ElementTree as ET
 import weakref
+import shutil
 
 import httpx
 
@@ -123,6 +124,7 @@ class ArXivAdapter(SourceAdapter):
     def __init__(self, client: httpx.AsyncClient | None = None) -> None:
         self._client = client
         self._owns_client = client is None
+        self._prefer_curl = False
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
@@ -136,6 +138,38 @@ class ArXivAdapter(SourceAdapter):
     async def close(self) -> None:
         if self._owns_client and self._client:
             await self._client.aclose()
+
+    async def _curl_query(self, endpoint: str, params: dict[str, str]) -> str | None:
+        """Fallback to the OS HTTPS client for a public arXiv Atom query.
+
+        In some local Python runtimes, arXiv's Atom API intermittently stalls
+        despite the same canonical request succeeding with the system HTTPS
+        stack. This preserves the API request and XML parser; it is not HTML
+        scraping and is used only after the in-process client cannot return a
+        usable response.
+        """
+        curl = shutil.which("curl")
+        if not curl:
+            return None
+        command = [
+            curl, "--silent", "--show-error", "--location", "--connect-timeout", "4",
+            "--max-time", "12", "--get", endpoint,
+        ]
+        for key, value in params.items():
+            command.extend(["--data-urlencode", f"{key}={value}"])
+        command.extend(["-A", "Paper-audit/0.5 (citation verification)"])
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            stdout, _ = await asyncio.wait_for(process.communicate(), timeout=14.0)
+            if process.returncode != 0 or not stdout.strip():
+                return None
+            return stdout.decode("utf-8", errors="replace")
+        except (asyncio.TimeoutError, OSError):
+            return None
 
     async def lookup_doi(self, doi: str) -> Candidate | None:
         # Handle arXiv-issued DOIs: 10.48550/arXiv.XXXX.XXXXX
@@ -151,37 +185,47 @@ class ArXivAdapter(SourceAdapter):
     async def _lookup_arxiv_id_limited(self, arxiv_id: str) -> Candidate | None:
         client = await self._get_client()
         clean_id = re.sub(r"v\d+$", "", arxiv_id)
-        # Explicit IDs are definitive identifiers.  arXiv occasionally
-        # responds with transient 429/5xx errors; do not turn one such API
-        # hiccup into NOT_FOUND.  Retry a few times with a short backoff before
-        # returning no result, while keeping the request budget bounded.
-        for endpoint in _BASE_ALIASES:
-            for attempt in range(3):
+        # Explicit IDs are definitive identifiers. Try the in-process route
+        # once, then the independent system HTTPS route before giving up.
+        params = {"id_list": clean_id, "max_results": "1"}
+        if self._prefer_curl:
+            response_text = await self._curl_query(_BASE, params)
+            if response_text:
                 try:
-                    r = await client.get(
-                        endpoint,
-                        params={"id_list": clean_id, "max_results": "1"},
-                        headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
-                    )
-                    if r.status_code == 200:
-                        root = ET.fromstring(r.text)
-                        entries = root.findall("atom:entry", _NS)
-                        if entries:
-                            return _entry_to_candidate(entries[0])
-                    if r.status_code in {429, 500, 502, 503, 504} and attempt < 2:
-                        retry_after = r.headers.get("Retry-After")
-                        try:
-                            delay = min(float(retry_after), 3.0) if retry_after else 0.75 * (attempt + 1)
-                        except ValueError:
-                            delay = 0.75 * (attempt + 1)
-                        await asyncio.sleep(delay)
-                        continue
-                    break
-                except (httpx.HTTPError, ET.ParseError):
-                    if attempt < 2:
-                        await asyncio.sleep(0.75 * (attempt + 1))
-                        continue
-                    break
+                    root = ET.fromstring(response_text)
+                    entries = root.findall("atom:entry", _NS)
+                    if entries:
+                        return _entry_to_candidate(entries[0])
+                except ET.ParseError:
+                    pass
+            self._prefer_curl = False
+        for endpoint in _BASE_ALIASES:
+            try:
+                r = await client.get(
+                    endpoint,
+                    params=params,
+                    headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
+                )
+                if r.status_code == 200:
+                    root = ET.fromstring(r.text)
+                    entries = root.findall("atom:entry", _NS)
+                    if entries:
+                        return _entry_to_candidate(entries[0])
+            except (httpx.HTTPError, ET.ParseError):
+                pass
+            # The canonical API may be healthy while the local Python TLS or
+            # proxy route is not. Try the system HTTPS stack before moving to
+            # the alias/retrying the whole record.
+            response_text = await self._curl_query(endpoint, params)
+            if response_text:
+                try:
+                    root = ET.fromstring(response_text)
+                    entries = root.findall("atom:entry", _NS)
+                    if entries:
+                        self._prefer_curl = True
+                        return _entry_to_candidate(entries[0])
+                except ET.ParseError:
+                    pass
         return None
 
     async def search(self, ref: Reference) -> list[Candidate]:
@@ -239,32 +283,54 @@ class ArXivAdapter(SourceAdapter):
 
         seen_ids: set[str] = set()
         candidates: list[Candidate] = []
+
+        def add_entries(response_text: str) -> bool:
+            """Parse an Atom payload and append its distinct records.
+
+            The public API can return a perfectly valid empty Atom feed for a
+            non-match, so callers need the boolean result rather than relying
+            on an HTTP 200 status.  Keeping this independent from the
+            transport path lets the system HTTPS fallback behave exactly like
+            the in-process client.
+            """
+            try:
+                root = ET.fromstring(response_text)
+            except ET.ParseError:
+                return False
+            entries = root.findall("atom:entry", _NS)
+            for entry in entries:
+                candidate = _entry_to_candidate(entry)
+                key = candidate.arxiv_id or (candidate.title or "").casefold()
+                if key and key in seen_ids:
+                    continue
+                if key:
+                    seen_ids.add(key)
+                candidates.append(candidate)
+            return bool(entries)
+
         async def fetch(query: str) -> None:
             for endpoint in _BASE_ALIASES:
-                try:
-                    r = await client.get(
-                        endpoint, params={"search_query": query, "max_results": "5"},
-                        headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
-                    )
-                    if r.status_code != 200:
-                        continue
-                    root = ET.fromstring(r.text)
-                    entries = root.findall("atom:entry", _NS)
-                    # A 200/empty response can be a transient edge-cache
-                    # result. Let the canonical host have a chance before
-                    # declaring that this query found nothing.
-                    for entry in entries:
-                        candidate = _entry_to_candidate(entry)
-                        key = candidate.arxiv_id or (candidate.title or "").casefold()
-                        if key and key in seen_ids:
-                            continue
-                        if key:
-                            seen_ids.add(key)
-                        candidates.append(candidate)
-                    if entries:
-                        return
-                except (httpx.HTTPError, ET.ParseError):
-                    continue
+                params = {"search_query": query, "max_results": "5"}
+                # Match identifier lookups: when the Python TLS/proxy route
+                # is unreliable, use the host HTTPS stack for *title*
+                # searches too.  Previously only explicit arXiv IDs got this
+                # fallback, producing false NOT_FOUND results for ordinary
+                # bibliographic entries such as Word2Vec.
+                if not self._prefer_curl:
+                    try:
+                        r = await client.get(
+                            endpoint, params=params,
+                            headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
+                        )
+                        if r.status_code == 200 and add_entries(r.text):
+                            return
+                    except httpx.HTTPError:
+                        pass
+
+                response_text = await self._curl_query(endpoint, params)
+                if response_text and add_entries(response_text):
+                    self._prefer_curl = True
+                    return
 
         # Prefer the strict title routes.  Only when both title queries miss
         # do we spend additional requests on the author+keyword route.  This

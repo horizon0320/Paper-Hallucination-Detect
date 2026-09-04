@@ -25,6 +25,12 @@ def compute_verdict(ref: Reference, checks: list[CheckResult]) -> tuple[Verdict,
     if existence is None or existence.status == CheckStatus.ERROR:
         return Verdict.UNRESOLVABLE, ["Existence check could not run."]
 
+    if existence.evidence.get("web_source_unresolved"):
+        return Verdict.UNRESOLVABLE, [
+            "该条目提供的是网页来源；当前未能形成可交叉验证的学术记录，"
+            "不将其判定为不存在，建议人工核对原始链接。"
+        ]
+
     if existence.status == CheckStatus.FAIL:
         notes.append(
             "Could not verify this reference in any scholarly database. "

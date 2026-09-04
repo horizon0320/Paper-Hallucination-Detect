@@ -25,7 +25,11 @@ def _item_to_candidate(item: dict) -> Candidate:
     doi = item.get("DOI")
 
     pub_year = None
-    for date_key in ("published-print", "published-online", "issued"):
+    # ``issued`` is Crossref's canonical bibliographic publication date.  A
+    # journal article can be issued online in the cited year and later appear
+    # in a print issue; preferring the print year manufactured false metadata
+    # mismatches for otherwise exact DOI records.
+    for date_key in ("issued", "published-online", "published-print"):
         dp = item.get(date_key, {}).get("date-parts", [[None]])
         if dp and dp[0] and dp[0][0]:
             pub_year = int(dp[0][0])

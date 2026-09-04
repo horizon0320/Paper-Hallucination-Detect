@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from unittest.mock import AsyncMock
 import pytest
 import respx
 import httpx
@@ -13,7 +14,7 @@ from paperaudit.sources.semantic_scholar import SemanticScholarAdapter
 from paperaudit.sources.arxiv import ArXivAdapter
 from paperaudit.sources.zenodo import ZenodoAdapter
 from paperaudit.sources.webpage import WebPageAdapter
-from paperaudit.sources.domain.dblp import DBLPAdapter, is_cs
+from paperaudit.sources.domain.dblp import DBLPAdapter, DBLPTransportError, is_cs
 
 
 _OPENALEX_WORK = {
@@ -386,11 +387,26 @@ def test_dblp_semaphore_is_safe_across_python39_event_loops():
             await adapter.close()
 
     with respx.mock:
-        respx.get("http://dblp.org/search/publ/api").mock(
+        respx.get("https://dblp.org/search/publ/api").mock(
             return_value=httpx.Response(200, json=payload)
         )
         asyncio.run(run_once())
         asyncio.run(run_once())
+
+
+@pytest.mark.asyncio
+async def test_dblp_circuit_breaker_reports_outage_without_repeating_timeouts():
+    adapter = DBLPAdapter()
+    adapter._search_limited = AsyncMock(side_effect=DBLPTransportError("network unavailable"))
+    ref = Reference(title="Example Work")
+    with pytest.raises(DBLPTransportError):
+        await adapter.search(ref)
+    with pytest.raises(DBLPTransportError):
+        await adapter.search(ref)
+    with pytest.raises(DBLPTransportError, match="temporarily unavailable"):
+        await adapter.search(ref)
+    assert adapter._search_limited.await_count == 2
+    await adapter.close()
 
 
 @pytest.mark.asyncio

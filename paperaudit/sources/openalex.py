@@ -58,7 +58,15 @@ class OpenAlexAdapter(SourceAdapter):
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=get_settings().request_timeout)
+            # The desktop environment's ambient HTTPS proxy can respond with
+            # a quota/rate-limit page for OpenAlex while the public endpoint
+            # itself is reachable.  Avoid treating that proxy response as an
+            # ordinary empty search result; direct public API access yields
+            # the real bibliographic record.
+            self._client = httpx.AsyncClient(
+                timeout=get_settings().request_timeout,
+                trust_env=False,
+            )
         return self._client
 
     async def close(self) -> None:

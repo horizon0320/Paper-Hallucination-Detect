@@ -145,6 +145,12 @@ def _is_standalone_section_start(lines: list[str], index: int) -> bool:
     value = lines[index].strip()
     if not _STANDALONE_SECTION_LABEL_RE.match(value):
         return False
+    # A bibliography can wrap a final author's initial onto its own line at a
+    # page/column boundary (``..., Amodei,`` then ``D. Language Models ...``).
+    # It has the same surface form as an appendix label such as ``D.``, but a
+    # preceding author-list comma is unambiguous continuation evidence.
+    if index > 0 and re.search(r",\s*$", lines[index - 1]):
+        return False
     following = _next_nonempty_line(lines, index + 1)
     return following is not None and _looks_like_section_title(following[1])
 
@@ -175,6 +181,12 @@ def _is_inline_appendix_start(line: str) -> bool:
 def _trim_bibliography_end(lines: list[str]) -> list[str]:
     """Trim lines after the first post-bibliography section heading."""
     for j, line in enumerate(lines):
+        # MinerU preserves document structure as Markdown headings.  Once the
+        # references heading has been consumed, any later ATX heading marks a
+        # new paper section (appendix, experiments, evaluation details, ...),
+        # so it must never be parsed as another citation.
+        if j > 0 and _MD_HEADING_RE.match(line):
+            return lines[:j]
         # Some publisher PDFs put the prose directly on the same line as the
         # marker (for example ``Publisher's note Springer Nature ...``), so a
         # heading-only regex is insufficient here.
@@ -194,6 +206,12 @@ def _trim_bibliography_end(lines: list[str]) -> list[str]:
         if j > 0 and _is_standalone_section_start(lines, j):
             return lines[:j]
         if j > 0 and _is_inline_appendix_start(line):
+            # As with a standalone ``D`` label, do not mistake a wrapped
+            # author initial followed by the paper title (``D. Language
+            # Models ...``) for an inline appendix heading. A trailing comma
+            # on the preceding line marks the wrapped author list.
+            if re.search(r",\s*$", lines[j - 1]):
+                continue
             return lines[:j]
         # A running article title can reappear at the top of the next page,
         # followed by the first author line of the next section. Treat that
@@ -377,10 +395,9 @@ def _extract_text(path: Path) -> str:
     """
     Extract full text from a PDF.
 
-    If PAPERAUDIT_USE_MARKER is set, tries marker (PDF -> Markdown) first for
-    better layout/heading fidelity on hard documents. Otherwise (or if marker
-    isn't installed / fails) falls back to three backends in order:
-    PyMuPDF (best multi-column support) → pypdf → pdfminer.
+    Legacy text extraction helper retained only as a safety fallback. Normal
+    PDF parsing enters through :func:`parse_pdf_refs`, which invokes MinerU
+    3.4.5 before calling this function when MinerU is unavailable.
     """
     from paperaudit.config import get_settings
     if get_settings().use_marker:
@@ -393,16 +410,52 @@ def _extract_text(path: Path) -> str:
     try:
         import fitz  # PyMuPDF
         doc = fitz.open(str(path))
-        pages = []
+        page_blocks: list[list[tuple[float, float, float, float, str]]] = []
+        page_heights: list[float] = []
         for page in doc:
             # ``page.get_text()`` flattens adjacent ACL/EMNLP bibliography
             # blocks into a continuous stream.  Block text preserves the
             # publisher's entry boundaries and still follows the PDF's
             # column reading order when ``sort`` is omitted.
             blocks = page.get_text("blocks")
-            page_parts = [block[4].strip() for block in blocks if len(block) > 4 and block[4].strip()]
-            pages.append("\n\n".join(page_parts))
+            current: list[tuple[float, float, float, float, str]] = []
+            for block in blocks:
+                if len(block) <= 4 or not block[4].strip():
+                    continue
+                current.append((float(block[0]), float(block[1]), float(block[2]), float(block[3]), block[4].strip()))
+            page_blocks.append(current)
+            page_heights.append(float(page.rect.height))
         doc.close()
+        # Publisher templates repeat running headers/footers on nearly every
+        # page.  When block extraction is used, a header can be concatenated
+        # to the final bibliography entry on one page (turning a page year
+        # such as ``2023`` into ``2026``).  Remove only exact/near-exact block
+        # repetitions in the top/bottom page bands; body text and one-off
+        # content remain untouched.  This is layout-based and independent of
+        # any venue or paper title.
+        def chrome_key(value: str) -> str:
+            return re.sub(r"\s+", " ", value).strip().casefold()
+
+        occurrences: dict[str, set[int]] = {}
+        for page_index, blocks in enumerate(page_blocks):
+            page_height = page_heights[page_index] if page_index < len(page_heights) else 792.0
+            for _x0, y0, _x1, y1, value in blocks:
+                if y0 <= page_height * 0.15 or y1 >= page_height * 0.88:
+                    key = chrome_key(value)
+                    if key:
+                        occurrences.setdefault(key, set()).add(page_index)
+
+        pages = []
+        for page_index, blocks in enumerate(page_blocks):
+            page_height = page_heights[page_index] if page_index < len(page_heights) else 792.0
+            page_parts = []
+            for x0, y0, x1, y1, value in blocks:
+                key = chrome_key(value)
+                repeated = len(occurrences.get(key, ())) >= 2
+                if repeated and (y0 <= page_height * 0.15 or y1 >= page_height * 0.88):
+                    continue
+                page_parts.append(value)
+            pages.append("\n\n".join(page_parts))
         # Keep page boundaries visible to section detection. A number of PDF
         # templates place a repeated header/footer between the final reference
         # on one page and the first appendix heading on the next page.
@@ -436,7 +489,11 @@ def _extract_text(path: Path) -> str:
         ) from e
 
 
-def _augment_with_intext_refs(refs: list[Reference], text: str) -> list[Reference]:
+def _augment_with_intext_refs(
+    refs: list[Reference],
+    text: str,
+    bibliography_text: str | None = None,
+) -> list[Reference]:
     """Add body author-year keys that have no corresponding full entry.
 
     This runs for both the plaintext and GROBID paths.  A PDF can have a
@@ -446,8 +503,50 @@ def _augment_with_intext_refs(refs: list[Reference], text: str) -> list[Referenc
     """
     from paperaudit.parse.intext import canonical_author_key, extract_intext_citations
 
-    marker = re.search(r"(?im)^\s*(?:References|Bibliography)\s*$", text)
-    body = text[:marker.start()] if marker else text
+    marker = re.search(r"(?im)^\s*(?:#{1,6}\s+)?(?:References|Bibliography)\s*$", text)
+    if marker:
+        body = text[:marker.start()]
+    elif bibliography_text:
+        # Numbered publisher layouts (notably Nature) may have no literal
+        # "References" heading: the detected bibliography begins straight
+        # with ``1. Author ...``.  Scanning the entire PDF in that case
+        # reinterprets the bibliography's venue/year tokens as missing body
+        # citations (for example ``ACM, 2020``).  The layout extractor returns
+        # an exact slice of the full text, so exclude it before collecting
+        # genuine author-year citations from the article body.
+        bibliography_start = text.find(bibliography_text)
+        if bibliography_start < 0:
+            # The extracted bibliography is cleaned before parsing (page
+            # chrome is removed and later continuations may be appended), so
+            # it is not always byte-for-byte present in the full PDF text.
+            # Locate the first real reference line, then recover its adjacent
+            # numbered label. This remains a layout rule: it uses no title,
+            # author, venue, or paper-specific exception.
+            bib_lines = [line for line in bibliography_text.splitlines() if line.strip()]
+            first_number = next(
+                (line.strip() for line in bib_lines
+                 if re.fullmatch(r"(?:\[\s*\d{1,3}\s*\]|\d{1,3}[.)])", line.strip())),
+                None,
+            )
+            first_content = next(
+                (line for line in bib_lines
+                 if not re.fullmatch(r"\s*(?:\[\s*\d{1,3}\s*\]|\d{1,3}[.)])\s*", line)),
+                "",
+            )
+            content_pos = text.find(first_content) if first_content else -1
+            if content_pos >= 0 and first_number:
+                label_re = re.compile(
+                    rf"(?m)^[ \t]*{re.escape(first_number)}[ \t]*$"
+                )
+                labels = [m for m in label_re.finditer(text[:content_pos])]
+                nearby = [m for m in labels if content_pos - m.end() <= 1000]
+                if nearby:
+                    bibliography_start = nearby[-1].start()
+            elif content_pos >= 0:
+                bibliography_start = content_pos
+        body = text[:bibliography_start] if bibliography_start >= 0 else text
+    else:
+        body = text
     inline = extract_intext_citations(body)
     existing_keys: set[tuple[str, int]] = set()
     for ref in refs:
@@ -461,9 +560,41 @@ def _augment_with_intext_refs(refs: list[Reference], text: str) -> list[Referenc
             key = canonical_author_key(author)
             if key:
                 existing_keys.add((key, ref.year))
+
+    def raw_reference_covers(inline_ref: Reference) -> bool:
+        """Avoid adding a citation-only duplicate when field parsing failed.
+
+        A malformed long-author record can lose its structured ``authors``
+        field even though the complete raw bibliography line is present.  Its
+        in-text ``Brown et al., 2020`` citation must not then be reported as
+        a missing end-reference merely because the field extractor stumbled.
+        The fallback needs the same year plus a name-shaped raw match, so it
+        does not turn an arbitrary matching word in body prose into evidence.
+        """
+        if not inline_ref.authors or not inline_ref.year:
+            return False
+        cited_author = inline_ref.authors[0]
+        compact_author = re.sub(r"[^a-z0-9]+", "", cited_author.casefold())
+        surname = canonical_author_key(cited_author)
+        for full_ref in refs:
+            if full_ref.year != inline_ref.year:
+                continue
+            raw = full_ref.raw or ""
+            compact_raw = re.sub(r"[^a-z0-9]+", "", raw.casefold())
+            if len(compact_author) >= 4 and compact_author in compact_raw:
+                return True
+            if surname and re.search(
+                rf"\b{re.escape(surname)}\s*,\s*(?:[A-Z][A-Za-z.-]*\b|[A-Z]\.)",
+                raw,
+                re.IGNORECASE,
+            ):
+                return True
+        return False
+
     refs.extend(
         r for r in inline
         if (canonical_author_key(r.authors[0]), r.year) not in existing_keys
+        and not raw_reference_covers(r)
     )
     return refs
 
@@ -482,6 +613,15 @@ def _find_ref_section(text: str) -> str | None:
     min_pos = int(n * 0.20)   # ignore the first 20 % of the document
 
     best_match = None
+    # MinerU Markdown has reliable ATX section markers even when the PDF has
+    # no blank line around the heading. Prefer the last structural heading
+    # named References/Bibliography before trying PDF-text heuristics.
+    markdown_heading = re.compile(
+        r"(?im)^\s*#{1,6}\s+(?:References|Bibliography|Works\s+Cited|Literature\s+Cited)\s*:?[ \t]*$"
+    )
+    for m in markdown_heading.finditer(text):
+        if m.start() >= min_pos and (best_match is None or m.start() > best_match.start()):
+            best_match = m
     for pattern in _BIB_HEADER_PATTERNS:
         for m in pattern.finditer(text):
             if m.start() < min_pos:
@@ -524,33 +664,53 @@ def _find_ref_section(text: str) -> str | None:
 
 
 def parse_pdf_refs(path: Path, use_grobid: bool = True, llm_client: object | None = None) -> list[Reference]:
-    grobid_refs: list[Reference] = []
-    if use_grobid:
-        try:
-            from paperaudit.config import get_settings
-            from paperaudit.parse.grobid import parse_pdf_via_grobid
-            api_url = get_settings().grobid_api_url
-            if api_url:
-                grobid_refs = parse_pdf_via_grobid(path, api_url=api_url) or []
-        except Exception:
-            grobid_refs = []
-
+    path = Path(path)
     from paperaudit.parse.plaintext import parse_plaintext
-    text = _extract_text(path)
-    text = _MD_HEADING_RE.sub('', text)
+    # MinerU 3.4.5 is the primary PDF route.  It preserves page/column layout
+    # and gives the generic bibliography splitter a clean Markdown stream.
+    # The older text extractors remain a narrowly scoped safety fallback for
+    # installations where the pinned MinerU environment is unavailable.
+    try:
+        from paperaudit.parse.mineru_pdf import convert_pdf_to_markdown
+        text = convert_pdf_to_markdown(path) or _extract_text(path)
+    except Exception:
+        text = _extract_text(path)
     ref_section = _find_ref_section(text)
     if ref_section is None:
         # Parsing the entire document as a bibliography creates many false
         # references when a publisher omits or mangles the heading. The
         # numbered-tail fallback above is intentionally conservative; if it
         # also fails, report no extracted references instead of body text.
+        grobid_refs: list[Reference] = []
+        if use_grobid:
+            try:
+                from paperaudit.config import get_settings
+                from paperaudit.parse.grobid import parse_pdf_via_grobid
+                api_url = get_settings().grobid_api_url
+                if api_url:
+                    grobid_refs = parse_pdf_via_grobid(path, api_url=api_url) or []
+            except Exception:
+                grobid_refs = []
         return _augment_with_intext_refs(grobid_refs, text)
-    refs = grobid_refs or parse_plaintext(ref_section)
+    plaintext_refs = parse_plaintext(ref_section)
+    # MinerU's layout-aware Markdown is the source of truth for PDF text.  Do
+    # not replace it with a partial GROBID response merely because GROBID
+    # returned structured fields; use GROBID only when the Markdown route
+    # produced no parseable entries.
+    refs = plaintext_refs
+    if not refs and use_grobid:
+        try:
+            from paperaudit.config import get_settings
+            from paperaudit.parse.grobid import parse_pdf_via_grobid
+            api_url = get_settings().grobid_api_url
+            refs = parse_pdf_via_grobid(path, api_url=api_url) or [] if api_url else []
+        except Exception:
+            refs = []
     # Some submissions cite dozens of works in the body but contain only a
     # partial bibliography. Preserve those author-year keys as citation-only
     # records so the report exposes the omission instead of returning only the
     # two entries found after the References heading.
     try:
-        return _augment_with_intext_refs(refs, text)
+        return _augment_with_intext_refs(refs, text, bibliography_text=ref_section)
     except Exception:
         return refs

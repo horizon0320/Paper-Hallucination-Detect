@@ -13,6 +13,60 @@ from paperaudit.parse.pdf_refs import (
     parse_pdf_refs,
 )
 
+
+def test_mineru_adapter_invokes_pinned_cli_and_reads_markdown(monkeypatch, tmp_path):
+    """MinerU output is the primary PDF text source when its CLI is present."""
+    from paperaudit.parse import mineru_pdf
+
+    pdf_path = tmp_path / "sample paper.pdf"
+    pdf_path.write_bytes(b"%PDF-test")
+    fake_cli = tmp_path / "mineru"
+    fake_cli.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(mineru_pdf, "_mineru_cli", lambda: fake_cli)
+
+    def fake_run(command, **kwargs):
+        output = Path(command[command.index("--output") + 1])
+        target = output / pdf_path.stem / "txt"
+        target.mkdir(parents=True)
+        (target / f"{pdf_path.stem}.md").write_text(
+            "## References\n\n[1] A. One, \"A paper\", 2024.\n",
+            encoding="utf-8",
+        )
+        return type("Completed", (), {"returncode": 0})()
+
+    monkeypatch.setattr(mineru_pdf.subprocess, "run", fake_run)
+    value = mineru_pdf.convert_pdf_to_markdown(pdf_path)
+    assert value and "A paper" in value
+
+
+def test_mineru_adapter_returns_none_on_cli_failure(monkeypatch, tmp_path):
+    from paperaudit.parse import mineru_pdf
+
+    pdf_path = tmp_path / "sample.pdf"
+    pdf_path.write_bytes(b"%PDF-test")
+    monkeypatch.setattr(mineru_pdf, "_mineru_cli", lambda: "/fake/mineru")
+    monkeypatch.setattr(
+        mineru_pdf.subprocess,
+        "run",
+        lambda *args, **kwargs: type("Completed", (), {"returncode": 1})(),
+    )
+    assert mineru_pdf.convert_pdf_to_markdown(pdf_path) is None
+
+
+def test_mineru_adapter_uses_content_list_when_markdown_missing(tmp_path):
+    from paperaudit.parse import mineru_pdf
+
+    pdf_path = tmp_path / "structured.pdf"
+    pdf_path.write_bytes(b"%PDF-test")
+    output = mineru_pdf._cache_dir(pdf_path) / pdf_path.stem / "txt"
+    output.mkdir(parents=True)
+    (output / f"{pdf_path.stem}_content_list_v2.json").write_text(
+        '[ [{"type":"title","content":{"title_content":[{"type":"text","content":"References"}]}},'
+        '{"type":"paragraph","content":{"paragraph_content":[{"type":"text","content":"[1] A record."}]}} ] ]',
+        encoding="utf-8",
+    )
+    assert "# References" in (mineru_pdf.convert_pdf_to_markdown(pdf_path) or "")
+
 MARKDOWN_DOC = """\
 # A Paper About Things
 

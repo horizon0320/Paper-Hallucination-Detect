@@ -82,6 +82,16 @@ def has_author_mismatch(item: dict) -> bool:
     if item.get('overall_verdict') == 'UNRESOLVABLE':
         return False
     evidence = ((item.get('checks') or [{}])[0]).get('evidence', {})
+    # “疑似幻觉” is a cross-source conclusion. If a primary CS registry was
+    # unavailable for this item, a single remaining index with an incomplete
+    # or version-specific author list is only a review signal, not enough to
+    # accuse the citation of fabricating authors.
+    primary_registry_unavailable = any(
+        result.get('source') in {'dblp', 'arxiv'} and result.get('status') == 'error'
+        for result in evidence.get('source_results', [])
+    )
+    if primary_registry_unavailable:
+        return False
     author_mismatch_evidence = any(
         str(m).lower().startswith('authors:') for m in evidence.get('mismatches', [])
     )
@@ -171,6 +181,7 @@ def same_venue(left: object, right: object) -> bool:
         text = re.sub(r"\b(?:new york|ny|usa|association for computing machinery|acm|ieee)\b", " ", text)
         text = text.replace('neural information processing systems', ' neurips ')
         text = text.replace('nips', ' neurips ')
+        text = re.sub(r'international conference on (?:learning representations|representation learning)', ' iclr ', text)
         text = re.sub(r"[^a-z0-9]+", " ", text)
         return " ".join(text.split())
     a, b = norm(left), norm(right)
@@ -237,14 +248,20 @@ def authoritative_record(ref: dict, evidence: dict) -> dict:
     ), reverse=True)
     chosen = groups[0]
     chosen_records = chosen['records']
+    best_source = evidence.get('best_candidate_source')
+    best_title = evidence.get('best_candidate_title')
     representative = max(
         chosen_records,
         key=lambda r: (
+            # The verifier has already selected the record with the most
+            # compatible carrier/authors. Keep that source as the display
+            # representative instead of replacing it with an arXiv version
+            # solely because its year equals the cited (possibly mixed) year.
+            1 if r.get('source') == best_source and same_title(r.get('title'), best_title) else 0,
             1 if cited_year and r.get('year') == cited_year else 0,
             r.get('composite') or 0,
         ),
     )
-    best_title = evidence.get('best_candidate_title')
     # The current JSON format stores venue only for the selected candidate.
     # Reuse it when that candidate belongs to the selected consensus group.
     venue = evidence.get('best_candidate_venue') if any(
@@ -392,13 +409,28 @@ def generate_report(json_path: str | Path | None = None) -> Path:
         source = evidence.get('best_candidate_source') or 'unknown'
         confidence = check.get('confidence', 0)
         status = item.get('overall_verdict', 'UNRESOLVABLE')
+        # Backward compatibility for reports generated before web-root URLs
+        # were preserved by the parser: any cited URL with no strong academic
+        # match is a review item, never a fabricated/not-found claim.
+        web_source_unresolved = bool(
+            evidence.get('web_source_unresolved')
+            or (
+                (ref.get('urls') or [])
+                and status == 'NOT_FOUND'
+                and (evidence.get('title_score') or 0.0) < 0.85
+            )
+        )
         citation_only = bool(ref.get('citation_only'))
         suspected = has_author_mismatch(item)
-        category = 'citation-only' if citation_only else ('verified' if status == 'VERIFIED' else ('not-found' if status == 'NOT_FOUND' else ('suspected' if suspected else 'review')))
-        badge_class = 'citation-only' if citation_only else ('suspect' if suspected else ('ok' if status == 'VERIFIED' else ('warn' if status in ('METADATA_MISMATCH', 'CONTENT_DRIFT') else 'danger')))
-        display_status = '正文引用缺少文末记录' if citation_only else ('疑似幻觉' if suspected else status)
+        category = 'citation-only' if citation_only else ('verified' if status == 'VERIFIED' else ('not-found' if status == 'NOT_FOUND' and not web_source_unresolved else ('suspected' if suspected else 'review')))
+        badge_class = 'citation-only' if citation_only else ('suspect' if suspected else ('ok' if status == 'VERIFIED' else ('warn' if web_source_unresolved or status in ('METADATA_MISMATCH', 'CONTENT_DRIFT') else 'danger')))
+        display_status = '正文引用缺少文末记录' if citation_only else ('疑似幻觉' if suspected else ('网页来源待人工复核' if web_source_unresolved else status))
         authority = authoritative_record(ref, evidence)
-        authority_title = authority.get('title') or candidate
+        # A low-score generic search hit (for example ``Universal Code`` for
+        # a Sourcegraph homepage citation) is not an authority record.
+        authority_title = authority.get('title') or (
+            candidate if (evidence.get('title_score') or 0) >= 0.70 else None
+        )
         authority_sources = authority.get('sources') or ([source] if source != 'unknown' else [])
         support_count = authority.get('support_count') or (1 if authority_title and authority_title != '(no candidate)' else 0)
         authority_label = '多源共识权威记录' if authority.get('consensus') else '最佳匹配记录'
@@ -412,6 +444,11 @@ def generate_report(json_path: str | Path | None = None) -> Path:
             authority_sources = []
             support_count = 0
             authority_label = '未形成权威记录'
+        if web_source_unresolved:
+            authority_title = '未形成可交叉验证的学术记录'
+            authority_sources = []
+            support_count = 0
+            authority_label = '网页来源待人工复核'
         display_source = '未形成权威记录' if category == 'not-found' else source
         notes = '; '.join(item.get('notes') or [])
         if citation_only:
@@ -420,6 +457,8 @@ def generate_report(json_path: str | Path | None = None) -> Path:
         # still contains the pre-consensus "may be fabricated" message.
         if status == 'NOT_FOUND':
             notes = '当前信源未能验证该参考文献，可能是未收录、信息不完整或检索受限；建议人工复核。'
+        elif web_source_unresolved:
+            notes = '该条目提供的是网页来源；当前未形成可交叉验证的学术记录，不将其判定为不存在，建议人工核对原始链接。'
         elif suspected:
             notes = '作者列表与权威学术记录存在明显冲突，疑似引用幻觉；建议人工核对原始文献。'
         cited_authors = ref.get('authors') or []
@@ -433,7 +472,7 @@ def generate_report(json_path: str | Path | None = None) -> Path:
         # NOT_FOUND may contain low-scoring search candidates. They are not an
         # authority and must never be displayed as the comparison record (a
         # common source of false author/DOI mismatches in the report).
-        if category == 'not-found':
+        if category == 'not-found' or web_source_unresolved:
             found_authors = []
             found_year = None
             found_venue = None
@@ -444,6 +483,15 @@ def generate_report(json_path: str | Path | None = None) -> Path:
             not_found_label = '未找到可确认的学术记录'
             comparison_rows = [
                 comparison_row(label, cited, not_found_label, True, '未找到')
+                for label, cited in (
+                    ('标题', title), ('作者', author_display(cited_authors)),
+                    ('年份', cited_year), ('载体', cited_venue), ('DOI', cited_doi)
+                )
+            ]
+        elif web_source_unresolved:
+            web_review_label = '未形成可交叉验证的学术记录'
+            comparison_rows = [
+                comparison_row(label, cited, web_review_label, True, '待人工复核')
                 for label, cited in (
                     ('标题', title), ('作者', author_display(cited_authors)),
                     ('年份', cited_year), ('载体', cited_venue), ('DOI', cited_doi)
@@ -479,6 +527,9 @@ def generate_report(json_path: str | Path | None = None) -> Path:
             '<div class="match"><b>搜索结果：</b>未找到足够匹配的学术记录 '
             '<span class="muted">当前候选不足以确认该引用</span></div>'
             if category == 'not-found' else
+            '<div class="match"><b>搜索结果：</b>该条目为网页来源，尚未形成可交叉验证的学术记录 '
+            '<span class="muted">保留原始链接供人工核对</span></div>'
+            if web_source_unresolved else
             f'<div class="match"><b>搜索出的权威记录：</b>{esc(authority_title)} '
             f'<span class="muted">{esc(authority.get("year") or evidence.get("best_candidate_year") or "")} · '
             f'{esc(", ".join(authority_sources) or source)} · {esc(authority_label)}</span></div>'
