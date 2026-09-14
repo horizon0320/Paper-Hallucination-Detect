@@ -5,6 +5,7 @@ import unicodedata
 import asyncio
 import weakref
 import json
+import os
 import shutil
 
 import httpx
@@ -24,7 +25,7 @@ _DISAMBIGUATION_SUFFIX = re.compile(r"\s+\d{4}$")
 # preferable to spend a little longer on a paper than to silently turn a
 # throttled registry response into a false ``no_match``.
 _DBLP_CONCURRENCY_LIMIT = 1
-_DBLP_MIN_INTERVAL_SECONDS = 0.8
+_DBLP_MIN_INTERVAL_SECONDS = float(os.getenv("PAPERAUDIT_DBLP_MIN_INTERVAL", "1.5"))
 _DBLP_FAILURES_BEFORE_CIRCUIT_BREAK = 2
 _LOOP_SEMAPHORES: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = weakref.WeakKeyDictionary()
 _LOOP_NEXT_REQUEST: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, float] = weakref.WeakKeyDictionary()

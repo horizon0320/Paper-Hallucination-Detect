@@ -5,6 +5,18 @@ from abc import ABC, abstractmethod
 from paperaudit.models import Candidate, Reference
 
 
+class SourceUnavailableError(RuntimeError):
+    """Raised when a registry could not answer, as opposed to holding no match.
+
+    An empty candidate list is evidence: the registry genuinely has no record
+    for the citation, which is how a fabricated reference is detected. A 429, a
+    5xx, or a transport failure is not evidence at all, because the request never
+    produced data. Adapters that collapse the two turn an outage or a throttle
+    into a false NOT_FOUND verdict for a real paper, so every registry signals
+    unavailability by raising this instead of returning an empty list.
+    """
+
+
 class SourceAdapter(ABC):
     name: str = "unknown"
 

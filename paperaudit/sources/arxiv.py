@@ -11,7 +11,7 @@ import httpx
 
 from paperaudit.config import get_settings
 from paperaudit.models import Candidate, Reference
-from paperaudit.sources.base import SourceAdapter
+from paperaudit.sources.base import SourceAdapter, SourceUnavailableError
 
 _BASE = "https://export.arxiv.org/api/query"
 # arXiv's export host is normally the most reliable API endpoint, but it can
@@ -19,6 +19,7 @@ _BASE = "https://export.arxiv.org/api/query"
 # regional proxy. Keep the canonical host as a read-only second route.
 _BASE_ALIASES = (_BASE, "https://arxiv.org/api/query")
 _NS = {"atom": "http://www.w3.org/2005/Atom"}
+_USER_AGENT = "Paper-audit/0.5 (citation verification)"
 _ARXIV_CONCURRENCY_LIMIT = 3
 _LOOP_SEMAPHORES: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = weakref.WeakKeyDictionary()
 
@@ -36,6 +37,70 @@ def _get_arxiv_semaphore() -> asyncio.Semaphore:
         semaphore = asyncio.Semaphore(_ARXIV_CONCURRENCY_LIMIT)
         _LOOP_SEMAPHORES[loop] = semaphore
     return semaphore
+
+
+# arXiv allows clients at most one API request every three seconds, and a
+# tripped quota is shared by the whole host, so one 429 parks the batch.
+_ARXIV_MIN_INTERVAL_SECONDS = 3.0
+_ARXIV_QUOTA_COOLDOWN_SECONDS = 20.0
+_ARXIV_RATE_LIMIT_BACKOFF_SECONDS = 5.0
+_ARXIV_RATE_LIMIT_ATTEMPTS = 2
+_LOOP_NEXT_ARXIV_REQUEST: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, float] = weakref.WeakKeyDictionary()
+
+
+async def _wait_for_arxiv_slot() -> None:
+    """Pace arXiv requests globally within the active verification batch.
+
+    The export endpoint publishes a per-client request budget.  With several
+    citations in flight, each issuing an exact-title query plus a token query,
+    the burst overruns that budget and arXiv answers HTTP 429 with an empty
+    body.  Spacing requests keeps every citation's lookup meaningful instead
+    of trading quota for a batch of silent rate-limit responses.
+
+    The budget is also shared: once one request is told to back off, every
+    other request from this host meets the same answer.  _trip_arxiv_quota
+    parks the whole batch for a cooldown window, which replaces dozens of
+    independently doomed retries with one pause and leaves quota for the
+    lookups that run afterwards.
+    """
+    loop = asyncio.get_running_loop()
+    next_allowed = _LOOP_NEXT_ARXIV_REQUEST.get(loop, 0.0)
+    now = loop.time()
+    if next_allowed > now:
+        await asyncio.sleep(next_allowed - now)
+        now = loop.time()
+    _LOOP_NEXT_ARXIV_REQUEST[loop] = now + _ARXIV_MIN_INTERVAL_SECONDS
+
+
+def _trip_arxiv_quota(seconds: float) -> None:
+    """Push the batch-wide arXiv schedule out by a quota cooldown."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + seconds
+    if deadline > _LOOP_NEXT_ARXIV_REQUEST.get(loop, 0.0):
+        _LOOP_NEXT_ARXIV_REQUEST[loop] = deadline
+
+
+def _is_atom_feed(text: str | None) -> bool:
+    """Return whether a response body is a genuine Atom document.
+
+    The export endpoint answers HTTP 429 with an empty body, and a 200 that
+    carries a truncated page or an HTML error block is equally unusable.
+    Only a parseable feed counts as the registry actually answering, even
+    when that feed legitimately holds zero entries.
+    """
+    if not text or "<feed" not in text:
+        return False
+    try:
+        ET.fromstring(text)
+    except ET.ParseError:
+        return False
+    return True
+
+
+def _feed_entries(text: str) -> list[ET.Element]:
+    """Parse an Atom feed already validated by _is_atom_feed()."""
+    root = ET.fromstring(text)
+    return root.findall("atom:entry", _NS)
 
 
 def _entry_to_candidate(entry: ET.Element) -> Candidate:
@@ -139,6 +204,60 @@ class ArXivAdapter(SourceAdapter):
         if self._owns_client and self._client:
             await self._client.aclose()
 
+    async def _fetch_atom(self, endpoint: str, params: dict[str, str]) -> tuple[str | None, str]:
+        """Query one arXiv route, reporting whether the service answered.
+
+        Returns (atom_text, "ok") when arXiv returned a parseable feed and
+        (None, reason) otherwise.  The split exists because arXiv answers
+        HTTP 429 with an empty body: the previous code treated any non-200
+        exactly like a legitimate empty feed, so a throttled batch reported
+        arxiv=no_match for most citations and the verdict engine read that
+        silence as evidence that a real preprint does not exist.
+
+        The quota is per host and shared by both transports, so every
+        request -- in-process or through the system HTTPS client -- first
+        takes a paced slot, and a 429 waits out the window and retries on
+        the same route.  Switching transports stays reserved for a client
+        that cannot reach arXiv at all, because the other stack merely
+        consumes the same budget.
+        """
+        reason = "no route attempted"
+        for attempt in range(_ARXIV_RATE_LIMIT_ATTEMPTS):
+            if self._prefer_curl:
+                await _wait_for_arxiv_slot()
+                text = await self._curl_query(endpoint, params)
+                if _is_atom_feed(text):
+                    return text, "ok"
+                reason = "curl transport failed"
+                self._prefer_curl = False
+                continue
+            await _wait_for_arxiv_slot()
+            try:
+                client = await self._get_client()
+                r = await client.get(
+                    endpoint,
+                    params=params,
+                    headers={"User-Agent": _USER_AGENT},
+                )
+            except httpx.HTTPError as exc:
+                reason = type(exc).__name__
+                await _wait_for_arxiv_slot()
+                text = await self._curl_query(endpoint, params)
+                if _is_atom_feed(text):
+                    self._prefer_curl = True
+                    return text, "ok"
+                continue
+            if _is_atom_feed(r.text):
+                return r.text, "ok"
+            reason = "HTTP " + str(r.status_code)
+            if r.status_code != 429:
+                break
+            # Park the whole batch instead of retrying only this request: the
+            # next paced slot lands past the cooldown, so no other citation
+            # burns the same exhausted quota.
+            _trip_arxiv_quota(_ARXIV_QUOTA_COOLDOWN_SECONDS)
+        return None, reason
+
     async def _curl_query(self, endpoint: str, params: dict[str, str]) -> str | None:
         """Fallback to the OS HTTPS client for a public arXiv Atom query.
 
@@ -183,49 +302,24 @@ class ArXivAdapter(SourceAdapter):
             return await self._lookup_arxiv_id_limited(arxiv_id)
 
     async def _lookup_arxiv_id_limited(self, arxiv_id: str) -> Candidate | None:
-        client = await self._get_client()
         clean_id = re.sub(r"v\d+$", "", arxiv_id)
-        # Explicit IDs are definitive identifiers. Try the in-process route
-        # once, then the independent system HTTPS route before giving up.
         params = {"id_list": clean_id, "max_results": "1"}
-        if self._prefer_curl:
-            response_text = await self._curl_query(_BASE, params)
-            if response_text:
-                try:
-                    root = ET.fromstring(response_text)
-                    entries = root.findall("atom:entry", _NS)
-                    if entries:
-                        return _entry_to_candidate(entries[0])
-                except ET.ParseError:
-                    pass
-            self._prefer_curl = False
+        # An explicit identifier is definitive, so a route that cannot answer
+        # must not be reported as "this paper is not on arXiv".  Try every
+        # configured endpoint and both transports, and raise when none of
+        # them actually replied.
+        answered = False
         for endpoint in _BASE_ALIASES:
-            try:
-                r = await client.get(
-                    endpoint,
-                    params=params,
-                    headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
-                )
-                if r.status_code == 200:
-                    root = ET.fromstring(r.text)
-                    entries = root.findall("atom:entry", _NS)
-                    if entries:
-                        return _entry_to_candidate(entries[0])
-            except (httpx.HTTPError, ET.ParseError):
-                pass
-            # The canonical API may be healthy while the local Python TLS or
-            # proxy route is not. Try the system HTTPS stack before moving to
-            # the alias/retrying the whole record.
-            response_text = await self._curl_query(endpoint, params)
-            if response_text:
-                try:
-                    root = ET.fromstring(response_text)
-                    entries = root.findall("atom:entry", _NS)
-                    if entries:
-                        self._prefer_curl = True
-                        return _entry_to_candidate(entries[0])
-                except ET.ParseError:
-                    pass
+            text, outcome = await self._fetch_atom(endpoint, params)
+            if outcome == "ok":
+                answered = True
+                entries = _feed_entries(text)
+                if entries:
+                    return _entry_to_candidate(entries[0])
+        if not answered:
+            raise SourceUnavailableError(
+                "arXiv identifier lookup unavailable"
+            )
         return None
 
     async def search(self, ref: Reference) -> list[Candidate]:
@@ -283,22 +377,20 @@ class ArXivAdapter(SourceAdapter):
 
         seen_ids: set[str] = set()
         candidates: list[Candidate] = []
+        any_answered = False
+        # Only the strict title routes can establish that arXiv holds no copy of
+        # the cited work. Author-constrained queries are a deliberate recall
+        # fallback, so an empty author route says nothing about existence.
+        title_routes_answered = False
 
         def add_entries(response_text: str) -> bool:
             """Parse an Atom payload and append its distinct records.
 
-            The public API can return a perfectly valid empty Atom feed for a
-            non-match, so callers need the boolean result rather than relying
-            on an HTTP 200 status.  Keeping this independent from the
-            transport path lets the system HTTPS fallback behave exactly like
-            the in-process client.
+            A valid empty feed is a genuine non-match, so callers need the
+            entry count rather than an HTTP status; that is also why
+            _fetch_atom validates the body before this is ever reached.
             """
-            try:
-                root = ET.fromstring(response_text)
-            except ET.ParseError:
-                return False
-            entries = root.findall("atom:entry", _NS)
-            for entry in entries:
+            for entry in _feed_entries(response_text):
                 candidate = _entry_to_candidate(entry)
                 key = candidate.arxiv_id or (candidate.title or "").casefold()
                 if key and key in seen_ids:
@@ -306,41 +398,39 @@ class ArXivAdapter(SourceAdapter):
                 if key:
                     seen_ids.add(key)
                 candidates.append(candidate)
-            return bool(entries)
+            return bool(candidates)
 
-        async def fetch(query: str) -> None:
+        async def fetch(query: str, *, strict_title: bool = False) -> None:
+            nonlocal any_answered, title_routes_answered
             for endpoint in _BASE_ALIASES:
                 params = {"search_query": query, "max_results": "5"}
-                # Match identifier lookups: when the Python TLS/proxy route
-                # is unreliable, use the host HTTPS stack for *title*
-                # searches too.  Previously only explicit arXiv IDs got this
-                # fallback, producing false NOT_FOUND results for ordinary
-                # bibliographic entries such as Word2Vec.
-                if not self._prefer_curl:
-                    try:
-                        r = await client.get(
-                            endpoint, params=params,
-                            headers={"User-Agent": "Paper-audit/0.5 (citation verification)"},
-                        )
-                        if r.status_code == 200 and add_entries(r.text):
-                            return
-                    except httpx.HTTPError:
-                        pass
-
-                response_text = await self._curl_query(endpoint, params)
-                if response_text and add_entries(response_text):
-                    self._prefer_curl = True
-                    return
+                text, outcome = await self._fetch_atom(endpoint, params)
+                if outcome != "ok":
+                    continue
+                any_answered = True
+                if strict_title:
+                    title_routes_answered = True
+                add_entries(text)
+                return
 
         # Prefer the strict title routes.  Only when both title queries miss
         # do we spend additional requests on the author+keyword route.  This
         # keeps normal references inexpensive while recovering preprints whose
         # title changed between arXiv and the cited conference version.
         for query in title_queries:
-            await fetch(query)
+            await fetch(query, strict_title=True)
             if candidates:
                 break
         if not candidates:
             for query in author_queries:
                 await fetch(query)
+                if candidates:
+                    break
+        # Every route failed to answer.  Returning [] here would tell the
+        # verdict engine that arXiv holds no copy of the cited work, which is
+        # how a 429 quota window used to become a fabricated-citation finding.
+        if not candidates and (not any_answered or not title_routes_answered):
+            raise SourceUnavailableError(
+                "arXiv search unavailable after all routes"
+            )
         return candidates

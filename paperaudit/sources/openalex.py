@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 import unicodedata
 
@@ -7,9 +8,17 @@ import httpx
 
 from paperaudit.config import get_settings
 from paperaudit.models import Candidate, Reference
-from paperaudit.sources.base import SourceAdapter
+from paperaudit.sources.base import SourceAdapter, SourceUnavailableError
 
 _BASE = "https://api.openalex.org"
+
+
+class OpenAlexUnavailableError(SourceUnavailableError):
+    """OpenAlex answered with an error rather than with zero records.
+
+    Inherits the shared registry-availability contract so a throttle or outage
+    can never be read as evidence that a cited paper does not exist.
+    """
 
 
 def _work_to_candidate(work: dict) -> Candidate:
@@ -97,12 +106,28 @@ class OpenAlexAdapter(SourceAdapter):
             "per-page": "5",
         }
         if ref.year:
-            params["filter"] = f"publication_year:{ref.year}"
-        try:
-            r = await client.get(f"{_BASE}/works", params=params)
+            # A work is frequently indexed a year apart from the date the
+            # citation uses: an arXiv preprint posted in 2018 is cited as its
+            # 2019 proceedings version (Carlini et al., Secret Sharer).
+            # Restricting the query to the cited year removes that record
+            # before scoring can compare it, producing a false NOT_FOUND for
+            # a real paper.  Widen the window by one year either side and let
+            # the candidate scorer judge the year.
+            params["filter"] = "publication_year:{0}|{1}|{2}".format(
+                ref.year - 1, ref.year, ref.year + 1
+            )
+        # Throttling is transient: retry with the same backoff schedule the
+        # Semantic Scholar adapter uses before giving up on the record.
+        for attempt in range(3):
+            try:
+                r = await client.get(f"{_BASE}/works", params=params)
+            except httpx.HTTPError as exc:
+                raise OpenAlexUnavailableError(type(exc).__name__) from exc
             if r.status_code == 200:
                 results = r.json().get("results", [])
                 return [_work_to_candidate(w) for w in results]
-        except httpx.HTTPError:
-            pass
-        return []
+            if r.status_code == 429:
+                await asyncio.sleep(2 ** attempt)
+                continue
+            raise OpenAlexUnavailableError(f"HTTP {r.status_code}")
+        raise OpenAlexUnavailableError("rate limited after retries")

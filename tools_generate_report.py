@@ -497,6 +497,20 @@ def generate_report(json_path: str | Path | None = None) -> Path:
                     ('年份', cited_year), ('载体', cited_venue), ('DOI', cited_doi)
                 )
             ]
+        elif category == 'review':
+            # Verdict UNRESOLVABLE with no authority record: the check could
+            # not run to completion because scholarly registries were throttled
+            # or blocked.  Comparing the citation against an empty record made
+            # every field read as a difference, which looked like a metadata
+            # error rather than a missing lookup.
+            unavailable_label = '信源未能应答，无可比对记录'
+            comparison_rows = [
+                comparison_row(label, cited, unavailable_label, True, '未能核验')
+                for label, cited in (
+                    ('标题', title), ('作者', author_display(cited_authors)),
+                    ('年份', cited_year), ('载体', cited_venue), ('DOI', cited_doi)
+                )
+            ]
         else:
             comparison_rows = [
                 comparison_row('标题', title, authority_title, not same_title(title, authority_title)),

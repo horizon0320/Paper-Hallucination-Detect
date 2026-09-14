@@ -7,7 +7,7 @@ import httpx
 
 from paperaudit.config import get_settings
 from paperaudit.models import Candidate, Reference
-from paperaudit.sources.base import SourceAdapter
+from paperaudit.sources.base import SourceAdapter, SourceUnavailableError
 
 _BASE = "https://api.crossref.org"
 _DOI_RE = re.compile(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
@@ -136,13 +136,21 @@ class CrossrefAdapter(SourceAdapter):
                 **title_params,
                 "query.author": " ".join(ref.authors[:2]),
             })
+        failures: list[str] = []
         for params in params_list:
             try:
                 r = await client.get(f"{_BASE}/works", params=params)
-                if r.status_code == 200:
-                    items = r.json().get("message", {}).get("items", [])
-                    if items:
-                        return [_item_to_candidate(i) for i in items]
-            except httpx.HTTPError:
+            except httpx.HTTPError as exc:
+                failures.append(type(exc).__name__)
                 continue
+            if r.status_code == 200:
+                items = r.json().get("message", {}).get("items", [])
+                return [_item_to_candidate(i) for i in items]
+            failures.append(f"HTTP {r.status_code}")
+        # Nothing answered successfully.  Returning [] here would be read
+        # downstream as "Crossref holds no record for this title", which is how
+        # a throttle or an outage manufactures a false NOT_FOUND verdict for a
+        # real paper.  Empty results and failed requests stay distinct.
+        if failures:
+            raise SourceUnavailableError("; ".join(failures))
         return []

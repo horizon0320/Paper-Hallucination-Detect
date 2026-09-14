@@ -55,6 +55,24 @@ paperaudit check paper.pdf --format html
 该命令会同时保存 `outputs/<文件名>_paperaudit_basic.json` 和
 `outputs/<文件名>_paperaudit_basic_report.html`，并在终端打印文件路径。
 
+也可以显式使用当前默认配置：
+
+```bash
+paperaudit check paper.pdf --format html --domain auto --concurrency 8
+```
+
+`--domain auto` 针对本项目范围内的计算机论文，对每条参考文献查询 DBLP 和 arXiv，再结合 Crossref、OpenAlex、Semantic Scholar 等信源交叉匹配。URL 存活检查、LLM 内容相关性检查和 SQLite 缓存默认不启用，因此不需要主动填写 `--no-url`、`--no-llm`、`--no-cache`；并发默认是 8。
+
+### PDF 解析
+
+PDF 默认使用 MinerU 3.4.5（Python 3.12）提取版面和参考文献，不使用旧版 PDF 解析器。当前环境的 MinerU 可执行文件为：
+
+```bash
+/Users/acc/Documents/ChatGPT/paper-ethical-audit/.venv-mineru/bin/mineru
+```
+
+MinerU 不可用时程序才会回退到兼容性解析路径。MinerU 输出后会保留版面结构，并用 PDF 文本层做保守字符校正，处理双栏、跨页、连字和 ACM 字体漏字问题。
+
 ### 浏览器上传页面
 
 如果希望在网页中选择 PDF 并查看进度条：
@@ -66,6 +84,23 @@ paper-audit-web
 然后打开 <http://127.0.0.1:8765>。上传和验证都在本机进行；任务完成后页面会直接提供 HTML 报告链接。
 
 演示时可以打开 <http://127.0.0.1:8765/demo>。该页面使用演示进度并在同一页展示预先生成的报告，不会等待外部接口。
+
+## API 限流与可选配置
+
+DBLP 没有 token 认证；程序按单请求队列访问，默认间隔 1.5 秒。Semantic Scholar 官方 API key 的 introductory limit 是 1 request/second；程序默认按 1.1 秒串行访问，并尊重服务端 `Retry-After`。有 key 时可配置：
+
+```bash
+export SEMANTIC_SCHOLAR_API_KEY="your-api-key"
+export PAPERAUDIT_DBLP_MIN_INTERVAL=2.0
+export PAPERAUDIT_SEMANTIC_SCHOLAR_MIN_INTERVAL=2.0
+```
+
+没有 key 也可以运行；如果信源被限流、反爬或暂时不可达，报告会标记为 `UNRESOLVABLE`，不会把网络故障直接判成“疑似幻觉”。
+
+## 示例报告
+
+- [CoDe_SEC 最新示例报告](outputs/CoDe_SEC_camera_ready_paperaudit_basic_report.html)
+- [Principled Policy Optimization 示例报告](outputs/24114_Principled_Policy_Optimi_paperaudit_basic_report.html)
 
 ## 当前功能
 

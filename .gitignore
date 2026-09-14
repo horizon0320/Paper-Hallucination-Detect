@@ -39,3 +39,6 @@ Thumbs.db
 .claude/settings.local.json
 .claude/settings.local.json
 .specstory/statistics.json
+# Local browser uploads and MinerU/intermediate audit artifacts
+outputs/.web_uploads/
+tmp/

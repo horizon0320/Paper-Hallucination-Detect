@@ -28,6 +28,11 @@ def _normalize_pdf_text(value: str) -> str:
     # content; remove the tags while retaining their text payload so names
     # and titles become searchable again.
     text = re.sub(r"</?[^>]+>", "", text)
+    # BibTeX-style protection braces survive into extracted text for some
+    # templates ({CodexLeaks}: ..., A {Mixed-Methods} study).  They tell the
+    # formatter to keep capitalization; they are not characters of the title,
+    # and every registry query carrying them scores below the real record.
+    text = re.sub(r"[{}]", "", text)
     # Some PDF fonts export accents as a spacing glyph before the letter
     # (``Herv´e J´egou``) instead of a combining mark. Move the mark onto the
     # following vowel, then compose it so reports show the real author name.
@@ -121,12 +126,30 @@ def _fix_hyphenated_breaks(text: str) -> str:
 
 
 def _cleanup_chunk(chunk: str) -> str:
+    # Strip MinerU layout tags and normalise glyphs before joining hyphens.
+    # The tags split a wrapped word across markup (``l<sub>an-</sub> guage``),
+    # so the hyphen rules below could never see the real word boundary.
+    chunk = _normalize_pdf_text(chunk)
     chunk = _fix_hyphenated_breaks(chunk)
     # Once physical lines are joined, a line-wrap hyphen is represented as
     # ``detec- tion`` rather than ``detec-\ntion``.  Remove this artifact only
-    # when both fragments are lowercase; ordinary compounds such as
-    # ``multi-task`` have no whitespace after the hyphen and remain intact.
-    chunk = re.sub(r"(?<=[a-z]{2})-\s+(?=[a-z])", "", chunk)
+    # when letters precede the hyphen and a lowercase word follows it, so a
+    # numeric range (``pp. 12- 15``) and ordinary compounds such as
+    # ``multi-task``, which have no whitespace after the hyphen, stay intact.
+    # A hyphen after an all-capital fragment is part of the term rather than
+    # a line-break artifact (``LLM-`` then ``based`` cites ``LLM-based``), so
+    # only the break space is removed and the hyphen is preserved.
+    def join_break(match: re.Match[str]) -> str:
+        head = match.group(1)
+        return f"{head}-" if head.isupper() else head
+
+    chunk = re.sub(r"([A-Za-z]{2})-\s+(?=[a-z])", join_break, chunk)
+    # A break at an existing hyphen can also precede a capital: hyphenated
+    # surnames (``Herbert-`` then ``Voss``) and compounds such as ``Pre-``
+    # then ``Training``.  Keep the hyphen and drop only the break space, so
+    # the name stays one token for author matching.  Digits are excluded by
+    # the lookbehind, leaving page ranges such as ``pp. 12- 15`` intact.
+    chunk = re.sub(r"([A-Za-z]{2,})-\s+(?=[A-Z])", r"\1-", chunk)
     chunk = re.sub(r"\s+", " ", chunk).strip()
     # PyMuPDF can expose a running page footer as an isolated 4-digit token
     # inside a reference when a column continues on the next page (e.g.
@@ -948,11 +971,15 @@ def extract_fields(chunk: str, style: Style = Style.UNKNOWN) -> Reference:
     forced_boundary = explicit_id_tail or carrier_tail
     if forced_boundary and style in {Style.UNKNOWN, Style.AUTHOR_YEAR, Style.LNCS}:
         before_id = chunk[:forced_boundary.start()].rstrip(" .")
+        # Strip proceedings/carrier metadata that can occur between the title
+        # and an arXiv identifier (``Title. In Proceedings ..., 2025.
+        # arXiv:...``) before locating the author/title sentence pair.
+        before_for_pair = re.split(r"\.\s+In\s+", before_id, maxsplit=1, flags=re.IGNORECASE)[0].rstrip(" .")
         # Match the final author-sentence/title-sentence pair. Greedy author
         # prefix is intentional because initials contain many periods.
         pair = re.search(
             r"^(?P<authors>.+)\.\s+(?P<title>[A-ZÀ-ÖØ-Ý][^.]{8,240})\.?$",
-            before_id,
+            before_for_pair,
         )
         if pair:
             parsed_authors = _parse_author_list(pair.group("authors"))
@@ -1271,6 +1298,45 @@ def _extract_generic(chunk: str) -> tuple[str | None, list[str]]:
     return None, []
 
 
+def _widen_venue_boundary(title_part: str, venue_part: str) -> tuple[str, str]:
+    """Move carrier initialisms from the title tail into the venue field.
+
+    Author-year bibliographies end the title with a sentence period and then
+    name the carrier, for example: "...based on collection of part detectors.
+    ISPRS Journal of Photogrammetry and Remote Sensing.". Keyword venue rules
+    can only recognise the generic head ("Journal of"), which leaves the
+    acronym stranded at the end of the title. When a short run of capitalized
+    tokens directly follows the final title period, that run is part of the
+    carrier name, so widen the boundary leftward over it.
+    """
+    if not title_part or not venue_part:
+        return title_part, venue_part
+    if not re.match(r"^[A-Z\u00C0-\u00DE]", venue_part):
+        return title_part, venue_part
+    # A venue that already opens with an explicit "In ..." marker is a
+    # complete carrier phrase, so any capitalized run before it is still
+    # part of the title (for example "... Fake News? An Empirical Study
+    # In Proceedings of ...").
+    if re.match(r"In\s+[A-Z]", venue_part):
+        return title_part, venue_part
+    tokens = title_part.split()
+    first = len(tokens)
+    for k in range(len(tokens) - 1, max(len(tokens) - 5, -1), -1):
+        core = tokens[k].rstrip(".")
+        if len(core) < 2 or not re.fullmatch("[A-Z\u00C0-\u00DE][A-Za-z\u00C0-\u00FF0-9'\u2019-]*", core):
+            break
+        first = k
+    if first == len(tokens):
+        return title_part, venue_part
+    head = " ".join(tokens[:first]).strip()
+    tail = " ".join(tokens[first:]).strip()
+    if not head or len(head) < 12 or len(head.split()) < 2:
+        return title_part, venue_part
+    if not re.search(r"[.!?]$", head):
+        return title_part, venue_part
+    return head, (tail + " " + venue_part).strip()
+
+
 def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]:
     """Extract AAAI/ACL and arXiv natural-name author-year references."""
     # Organization-only landing-page records (for example an association or
@@ -1478,6 +1544,8 @@ def _extract_author_year(chunk: str) -> tuple[str | None, list[str], str | None]
             title_part = rest[:sentence.start()].strip()
     title = title_part.strip(" .;") or None
     venue = rest[venue_markers.start():].strip().rstrip(".") if venue_markers else None
+    if title and venue:
+        title, venue = _widen_venue_boundary(title, venue)
     if venue:
         # Web records frequently append publication date and a literal URL
         # marker after the organization name. Keep only the carrier/source
@@ -1711,4 +1779,27 @@ def parse_plaintext(text: str, style_override: Style | None = None) -> list[Refe
     if not chunks:
         return []
     style = style_override or detect_style(chunks)
-    return [extract_fields(chunk, style) for chunk in chunks]
+    refs = [extract_fields(chunk, style) for chunk in chunks]
+    # Layout extraction can split a trailing carrier sentence into a
+    # title-less phantom record (for example ``... Nimble challenge ...``
+    # followed by ``NIST Special Publication, 2017.``).  Merge only a short
+    # suffix that has no independent identifier/title and clearly looks like
+    # venue metadata; genuine citation-only author-year records are retained.
+    merged: list[Reference] = []
+    for ref in refs:
+        if (
+            merged
+            and not ref.title
+            and not ref.doi
+            and not ref.arxiv_id
+            and not ref.urls
+            and ref.year
+            and not ref.authors
+            and len(ref.raw) <= 100
+            and re.search(r"\b(?:NIST|Publication|Proceedings|Journal|Press|volume|pages?)\b", ref.raw, re.IGNORECASE)
+        ):
+            combined = f"{merged[-1].raw} {ref.raw}"
+            merged[-1] = extract_fields(combined, style)
+        else:
+            merged.append(ref)
+    return merged

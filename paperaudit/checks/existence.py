@@ -34,9 +34,24 @@ def _surname(name: str) -> str:
     return parts[-1].lower() if parts else ""
 
 
+# German and Nordic family names are transliterated two ways in bibliographic
+# records: a registry may hold Schoelkopf where the PDF prints Schölkopf.
+# Stripping the diacritic alone gives scholkopf, a different token, so an
+# otherwise exact record was reported as an author disagreement.
+_TRANSLITERATIONS = {
+    "Ä": "AE", "ä": "ae",
+    "Ö": "OE", "ö": "oe",
+    "Ü": "UE", "ü": "ue",
+    "ß": "ss",
+    "Å": "AA", "å": "aa",
+    "Ø": "OE", "ø": "oe",
+}
+
+
 def _normalize_name_token(value: str) -> str:
     """Normalize PDF/API name variants before comparing author overlap."""
-    decomposed = unicodedata.normalize("NFKD", value)
+    folded = "".join(_TRANSLITERATIONS.get(ch, ch) for ch in value)
+    decomposed = unicodedata.normalize("NFKD", folded)
     without_marks = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
     return "".join(ch for ch in without_marks.casefold() if ch.isalnum())
 
@@ -92,6 +107,134 @@ def _authors_equivalent(ref_authors: list[str], cand_authors: list[str]) -> bool
     return _author_sequence(ref_authors) == _author_sequence(cand_authors)
 
 
+def _is_ordered_subsequence(shorter: list, longer: list) -> bool:
+    """Return whether every item of ``shorter`` occurs in ``longer`` in order.
+
+    A bibliography index may legitimately add entries that the citation never
+    listed (a group author before the person list, or a middle name the PDF
+    dropped), so prefix equality is too strict for author compatibility.
+    """
+    iterator = iter(longer)
+    return all(any(item == candidate for candidate in iterator) for item in shorter)
+
+
+def _no_registry_answered(source_results: list[dict]) -> bool:
+    """Return whether every queried adapter failed instead of returning records.
+
+    NOT_FOUND asserts that the scholarly record holds no such paper, which
+    requires somebody to have actually looked.  When every source reports a
+    throttle, a bot interstitial, or a transport failure, no lookup produced
+    evidence and the honest verdict is undetermined.  Collapsing that state
+    into a negative is what turned rate-limited batches into fabricated-
+    reference findings.
+    """
+    errors = [item for item in source_results if item["status"] == "error"]
+    if not source_results or len(errors) != len(source_results):
+        # At least one adapter answered, so a genuine negative is on record.
+        return False
+    return True
+
+
+# Registry adapters that index computer-science literature as a whole,
+# rather than resolving a publisher record or a landing page.
+_CITATION_INDEX_SOURCES = ("arxiv", "dblp", "openalex", "semantic_scholar")
+
+
+def _citation_indexes_answered(source_results: list[dict]) -> bool:
+    """Return whether the queried bibliography indexes support a negative.
+
+    Crossref and the generic web adapter resolve publisher records and
+    landing pages, so an empty result there does not establish that a
+    computer-science work is absent from the literature.  arXiv, DBLP,
+    OpenAlex, and Semantic Scholar are the indexes that hold it, and each has
+    blind spots: arXiv misses venues whose authors never post preprints, and
+    a publisher-only record can be absent from an aggregator.  A negative
+    from a single index is therefore too thin to call a citation fabricated,
+    so when several indexes were queried NOT_FOUND requires corroboration from
+    at least two.  Under an outage -- throttle responses and bot
+    interstitials -- the audit says it could not see instead of asserting what
+    is unproven.
+    """
+    indexes = [
+        item for item in source_results if item["source"] in _CITATION_INDEX_SOURCES
+    ]
+    if not indexes:
+        # The batch queried no citation index at all, so nothing here can
+        # corroborate or refute the citation; the caller's own
+        # all-sources-failed rule is the only meaningful check.
+        return True
+    answered = [item for item in indexes if item["status"] != "error"]
+    if any(item["status"] == "matched" for item in answered):
+        # A candidate already cleared the linkage gate, so this is a positive
+        # identification rather than a bare negative.
+        return True
+    if len(indexes) < 2:
+        # Only one index is configured: its empty result is the complete
+        # evidence available and the operator asked for that judgment.
+        return bool(answered)
+    return len(answered) >= 2
+
+
+_ARXIV_PREPRINT_CARRIER = re.compile(
+    r"arxiv\s*(?:preprint)?\s*\[?\s*(?:arxiv:\s*)?\d{4}\.\d{4,5}",
+    re.IGNORECASE,
+)
+
+
+def _cites_arxiv_preprint_version(ref: Reference) -> bool:
+    """Return whether the bibliography names an arXiv preprint as its carrier.
+
+    ``arXiv preprint arXiv:2306.11698 (2024)`` is the standard ACM/USENIX
+    rendering of a preprint citation, and the trailing year is the revision the
+    author read rather than the submission date arXiv reports for v1.  When the
+    selected record is that same preprint, the year pair describes two
+    revisions of one carrier and cannot support a metadata mismatch; without
+    this, correctly cited preprints were reported as inconsistent.
+    """
+    if not ref.arxiv_id:
+        return False
+    carrier = " ".join(filter(None, [ref.venue, ref.raw]))
+    return ref.arxiv_id in carrier.replace(" ", "") or bool(
+        _ARXIV_PREPRINT_CARRIER.search(carrier)
+    )
+
+
+_TRUNCATED_CITATION = re.compile(r"\bet\s+al\.?", re.IGNORECASE)
+
+
+def _citation_authors_truncated(ref: Reference) -> bool:
+    """Return whether the bibliography abbreviates its author list.
+
+    ``et al.`` means the citation itself is an incomplete author list, so no
+    index can be asked to agree with it name for name: the registry may name
+    authors the citation abbreviated, and a preprint and its proceedings
+    record may order them differently.  Requiring full compatibility here
+    reported correctly cited papers as metadata mismatches; an actually
+    substituted name still fails the overlap test below.
+    """
+    return bool(_TRUNCATED_CITATION.search(ref.raw or ""))
+
+
+def _author_token_universe(authors: list[str]) -> set[str]:
+    """Return every meaningful name token an index exposes for a list.
+
+    Some registries merge a group author into the following person when they
+    tokenize an author string, so ``CodeGemma Team, Heri Zhao`` arrives as the
+    single entry ``CodeGemma Team Heri Zhao``.  Comparing only the trailing
+    surname of each entry then loses the group author and reports a name
+    conflict for the correct record.  Keeping every multi-character token
+    lets a cited surname be accounted for wherever the index filed it.
+    """
+    tokens: set[str] = set()
+    for author in authors:
+        for part in _author_parts(author):
+            for word in re.findall(r"[A-Za-z[\u00c0-\u00ff]']+", str(part or "")):
+                token = _normalize_name_token(word)
+                if len(token) > 1:
+                    tokens.add(token)
+    return tokens
+
+
 def _authors_compatible(ref_authors: list[str], cand_authors: list[str]) -> bool:
     """Allow normal citation truncation while rejecting substitutions.
 
@@ -107,7 +250,27 @@ def _authors_compatible(ref_authors: list[str], cand_authors: list[str]) -> bool
     if ref_seq == cand_seq:
         return True
     shorter, longer = (ref_seq, cand_seq) if len(ref_seq) < len(cand_seq) else (cand_seq, ref_seq)
-    if longer[:len(shorter)] == shorter:
+    # An index list may add entries the citation never named: a group author
+    # before the person list (``GLM-4.5 Team, Aohan Zeng, ...``), or a
+    # middle author a PDF dropped.  Require only that the shorter list occur
+    # in order inside the longer one, so every cited name is still accounted
+    # for; a substituted or missing name breaks the ordered match and is
+    # still reported.
+    if _is_ordered_subsequence(shorter, longer):
+        return True
+    # Merged group authors (see _author_token_universe) are the remaining
+    # legitimate reason a cited name is absent from the trailing-surname
+    # sequence, so accept a cited surname that the index filed anywhere else
+    # inside one of its entries.  A genuinely invented name still fails:
+    # its surname token appears nowhere in the record.
+    cand_tokens = _author_token_universe(cand_authors)
+    ref_tokens = _author_token_universe(ref_authors)
+    cited_surnames = {surname for surname, _ in ref_seq}
+    index_surnames = {surname for surname, _ in cand_seq}
+    if cited_surnames and cited_surnames <= (index_surnames | cand_tokens):
+        return True
+    if index_surnames and index_surnames <= (cited_surnames | ref_tokens) \
+            and len(cand_seq) <= len(ref_seq):
         return True
     # Preprints and their eventual proceedings versions occasionally reorder
     # the same contributors. That is not an author-list substitution and must
@@ -274,7 +437,22 @@ def _check_metadata_consistency(
     # case, mixing the preprint year with the conference carrier is a
     # metadata/version inconsistency, not an author hallucination.
     venue_aligned = bool(venue_score is not None and venue_score >= 0.75)
-    if ref.year and best.year and (
+    # An explicit arXiv identifier pins which *work* is cited, never which
+    # revision.  When the bibliography itself names the preprint as the carrier
+    # (``arXiv preprint arXiv:2306.11698 (2024)``), the cited year is the
+    # revision the author read while every index reports the v1 submission
+    # date, and some indexes file the eventual proceedings year instead.
+    # That one-year drift describes revisions of one carrier, not an
+    # inconsistency, and flagging it turned correctly cited preprints into
+    # metadata mismatches.
+    preprint_revisions = bool(
+        ref.year
+        and best.year
+        and identifier_match
+        and abs(ref.year - best.year) <= 1
+        and _cites_arxiv_preprint_version(ref),
+    )
+    if ref.year and best.year and not preprint_revisions and (
         abs(ref.year - best.year) > 2
         or (ref.year != best.year and venue_aligned)
         or (ref.year != best.year and identifier_match)
@@ -286,8 +464,18 @@ def _check_metadata_consistency(
     # citation.  Enforce full-list consistency once the citation exposes at
     # least three author entries, which is enough to catch substitutions in
     # long hallucinated lists without penalizing normal short citations.
-    if ref.authors and best.authors and len(_author_sequence(ref.authors)) >= 3 and not _authors_compatible(ref.authors, best.authors):
+    if (
+        ref.authors
+        and best.authors
+        and len(_author_sequence(ref.authors)) >= 3
+        and not _authors_compatible(ref.authors, best.authors)
+    ):
         overlap = _author_overlap(ref.authors, best.authors)
+        # A citation that abbreviates its own author list cannot support a
+        # strict name-for-name comparison, so only a weak overlap -- what an
+        # invented list actually produces -- stays a mismatch.
+        if _citation_authors_truncated(ref) and overlap >= 0.5:
+            return mismatches
         mismatches.append(
             f"authors: author list differs after abbreviation normalization "
             f"(overlap={overlap:.2f}), cited={ref.authors[:2]}, found={best.authors[:2]}"
@@ -304,6 +492,29 @@ def _strong_candidates(
         if item[1].get("title_score", 0.0) >= 0.85
         and item[1].get("author_score", 0.0) >= 0.3
     ]
+
+
+def _record_carrier(candidate: Candidate) -> str:
+    """Return the publication carrier a record reports, for corroboration.
+
+    arXiv and the aggregators that mirror it expose the same v1 submission date
+    under labels such as ``arXiv``, ``arXiv.org``, and ``CoRR 2024``.  Two
+    sources that both read that one date are a single piece of evidence about
+    the year, so they must not corroborate each other into a metadata
+    mismatch; only a genuinely different carrier (a proceedings or journal
+    record) counts separately.
+    """
+    label = " ".join(str(candidate.venue or "").split()).casefold()
+    source = str(candidate.source or "").casefold()
+    if (
+        "arxiv" in label
+        or "corr" in label
+        or "preprint" in label
+        or "openreview" in label
+        or source == "arxiv"
+    ):
+        return "preprint"
+    return " ".join([source, label]).strip()
 
 
 def _candidate_summaries(
@@ -517,7 +728,7 @@ async def check_existence(
         # citation is unresolved rather than evidence that the work does not
         # exist. This distinction prevents outages and bot protection from
         # being reported as a fabricated reference.
-        if source_results and all(item["status"] == "error" for item in source_results):
+        if _no_registry_answered(source_results):
             result = CheckResult(
                 name="existence",
                 status=CheckStatus.ERROR,
@@ -543,12 +754,20 @@ async def check_existence(
                 },
                 cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
             )
-        else:
+        elif _citation_indexes_answered(source_results):
             result = CheckResult(
                 name="existence",
                 status=CheckStatus.FAIL,
                 confidence=0.9 if (ref.title or ref.doi) else 0.5,
                 evidence={**evidence, "verdict": "not_found", "candidates_checked": 0},
+                cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+            )
+        else:
+            result = CheckResult(
+                name="existence",
+                status=CheckStatus.ERROR,
+                confidence=0.0,
+                evidence={**evidence, "verdict": "source_unavailable", "candidates_checked": 0},
                 cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
             )
     else:
@@ -618,13 +837,45 @@ async def check_existence(
         if not linkable:
             evidence["candidate_sources"] = _candidate_summaries(candidates)
             evidence["total_candidates"] = len(candidates)
-            result = CheckResult(
-                name="existence",
-                status=CheckStatus.FAIL,
-                confidence=0.7,
-                evidence={**evidence, "verdict": "not_found", "candidates_checked": len(candidates)},
-                cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
-            )
+            # Weak lexical near-misses say nothing about a web-identified
+            # source. A tool, dataset, or documentation page cited by URL is
+            # not expected to hold a scholarly record, so this branch must
+            # apply the same exemption as the no-candidate branch; previously
+            # it returned FAIL here and the verdict engine reported a
+            # legitimate citation as not found.
+            if ref.urls:
+                result = CheckResult(
+                    name="existence",
+                    status=CheckStatus.WARN,
+                    confidence=0.0,
+                    evidence={
+                        **evidence,
+                        "verdict": "web_source_unresolved",
+                        "candidates_checked": len(candidates),
+                        "web_source_unresolved": True,
+                    },
+                    cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+                )
+            elif _citation_indexes_answered(source_results):
+                result = CheckResult(
+                    name="existence",
+                    status=CheckStatus.FAIL,
+                    confidence=0.7,
+                    evidence={**evidence, "verdict": "not_found", "candidates_checked": len(candidates)},
+                    cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+                )
+            else:
+                result = CheckResult(
+                    name="existence",
+                    status=CheckStatus.ERROR,
+                    confidence=0.0,
+                    evidence={
+                        **evidence,
+                        "verdict": "source_unavailable",
+                        "candidates_checked": len(candidates),
+                    },
+                    cost=CheckCost(api_calls=api_calls, elapsed_ms=elapsed),
+                )
             if use_cache:
                 from paperaudit.cache import get_cache
                 cache = get_cache()
@@ -655,10 +906,17 @@ async def check_existence(
             if ref.venue and item[1].get("venue_score", 0.0) >= 0.75
         ]
         if venue_matches:
+            # Several registries expose the same work once as the preprint
+            # year and once as the proceedings year.  Among venue-aligned
+            # records, prefer the one agreeing with the cited year before
+            # falling back to composite score; otherwise the preprint record
+            # wins on author completeness and the report claims a year
+            # mismatch for a citation that matches the proceedings record.
             best_score, best_ev, best_cand = max(
                 venue_matches,
                 key=lambda item: (
                     item[1].get("author_score", 0.0),
+                    1 if (ref.year and item[2].year == ref.year) else 0,
                     item[0],
                 ),
             )
@@ -698,9 +956,29 @@ async def check_existence(
                 identifier_match = bool(
                     best_ev.get("exact_arxiv_match") or best_ev.get("exact_doi_match")
                 )
+                # The corroboration rule is the same whether or not the carrier
+                # agrees: proceedings volumes are indexed under both the volume
+                # year and the online-first year, so one index's disagreement
+                # cannot establish that the citation's year is wrong.  A real
+                # year error is visible as the same conflicting year reported by
+                # two independent registries.
+                conflicting_year = best_cand.year
+                # Only distinct carriers corroborate.  A preprint date is
+                # one fact reported by several registries, so it cannot
+                # agree with itself into a metadata error.
+                agreeing = {
+                    _record_carrier(item[2]) for item in strong
+                    if item[2].year == conflicting_year
+                    and item[2].source
+                    and _record_carrier(item[2]) != "preprint"
+                }
                 if year_matches and not venue_aligned and not identifier_match:
                     mismatches = [m for m in mismatches if not m.startswith("year:")]
-                elif len(conflicting_sources) < 2 and not venue_aligned and not identifier_match:
+                elif (
+                    len(agreeing) < 2
+                    and not identifier_match
+                    and not (ref.doi and best_cand.doi)
+                ):
                     mismatches = [m for m in mismatches if not m.startswith("year:")]
                     evidence["year_conflict_unconfirmed"] = {
                         "cited_year": ref.year,

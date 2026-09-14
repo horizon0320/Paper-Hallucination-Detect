@@ -96,12 +96,27 @@ def _content_list_text(output_dir: Path, stem: str) -> str | None:
     return text if text.strip() else None
 
 
+def _with_text_layer(path: Path, markdown: str, output_dir: Path) -> str:
+    """Return MinerU Markdown repaired with the PDF embedded text layer.
+
+    MinerU layout is kept untouched: only the characters inside individual
+    blocks are re-read from the PDF text layer, so bibliography boundaries
+    and section headings stay exactly as MinerU detected them.
+    """
+    from paperaudit.parse.text_layer import recover_pdf_text_layer
+
+    repaired, _replaced = recover_pdf_text_layer(path, markdown, output_dir)
+    return repaired
+
+
 def convert_pdf_to_markdown(path: Path, timeout: float = 900.0) -> str | None:
     """Run the pinned MinerU CLI and return its Markdown output.
 
     The output is cached by input path, size, and mtime so repeated web checks
     do not pay the model startup cost again.  A failed/empty invocation returns
-    ``None`` and leaves the caller free to use its safe legacy fallback.
+    ``None`` and leaves the caller free to use its safe legacy fallback.  Every
+    successful result is passed through the PDF text-layer repair, which restores
+    characters that MinerU drops for kerned/ligature fonts (see text_layer).
     """
     path = Path(path).expanduser().resolve()
     if not path.is_file():
@@ -116,12 +131,12 @@ def convert_pdf_to_markdown(path: Path, timeout: float = 900.0) -> str | None:
         try:
             value = markdown.read_text(encoding="utf-8", errors="replace")
             if value.strip():
-                return value
+                return _with_text_layer(path, value, output_dir)
         except OSError:
             pass
     structured = _content_list_text(output_dir, path.stem)
     if structured:
-        return structured
+        return _with_text_layer(path, structured, output_dir)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     project = Path(os.getenv("PAPERAUDIT_MINERU_PROJECT", str(DEFAULT_MINERU_PROJECT))).expanduser()
@@ -176,5 +191,6 @@ def convert_pdf_to_markdown(path: Path, timeout: float = 900.0) -> str | None:
         except OSError:
             value = ""
         if value.strip():
-            return value
-    return _content_list_text(output_dir, path.stem)
+            return _with_text_layer(path, value, output_dir)
+    structured = _content_list_text(output_dir, path.stem)
+    return _with_text_layer(path, structured, output_dir) if structured else None
