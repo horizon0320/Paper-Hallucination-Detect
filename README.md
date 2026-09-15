@@ -11,7 +11,10 @@ Paper-audit 用于检查论文参考文献是否能够在学术数据库中找�
 ```bash
 git clone https://github.com/horizon0320/Paper-audit.git
 cd Paper-audit
-pip install -e ".[dev]"
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
 ```
 
 ### 检查 PDF
