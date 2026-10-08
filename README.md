@@ -1,6 +1,6 @@
-# Paper-audit
+# Paper-Hallucination-Detect(PHD)
 
-Paper-audit 用于检查论文参考文献是否能够在学术数据库中找到，并比较引用信息与数据库记录是否一致。
+Paper-Hallucination-Detect(PHD) 用于检查论文参考文献是否能够在学术数据库中找到，并比较引用信息与数据库记录是否一致。
 
 ## 怎么用
 
@@ -9,8 +9,8 @@ Paper-audit 用于检查论文参考文献是否能够在学术数据库中找�
 需要 Python 3.9 或更高版本：
 
 ```bash
-git clone https://github.com/horizon0320/Paper-audit.git
-cd Paper-audit
+git clone https://github.com/horizon0320/Paper-Hallucination-Detect.git
+cd Paper-Hallucination-Detect
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
