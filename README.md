@@ -1,6 +1,20 @@
-# Paper-Hallucination-Detect(PHD)
+# Paper-Hallucination-Detect (PHD)
 
-Paper-Hallucination-Detect(PHD) 用于检查论文参考文献是否能够在学术数据库中找到，并比较引用信息与数据库记录是否一致。
+面向计算机论文的参考文献审计工具：使用 MinerU 解析 PDF，并通过 DBLP、arXiv 等学术信源核验引用，帮助发现缺失、错配或疑似幻觉引用。
+
+> 输入一篇 PDF，即可得到可复核的 HTML、JSON 或 Markdown 报告。
+
+## 快速开始
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+paperaudit check paper.pdf --format html
+```
+
+生成的网页报告位于 `outputs/<文件名>_paperaudit_basic_report.html`。
 
 ## 怎么用
 
